@@ -88,6 +88,11 @@ extern int __pmGetInternalState(void);
 #define PROXY_PORT 44322
 
 /*
+ * port that clients connect to pmwebd(1) by default
+ */
+#define PMWEBD_PORT 44323
+
+/*
  * Internally, this is how to decode a PMID!
  * - flag is to denote state internally in some operations
  * - domain is usually the unique domain number of a PMDA, but DYNAMIC_PMID
@@ -195,30 +200,30 @@ pmInDom_build (unsigned int domain, unsigned int serial)
 /*
  * internal structure of a PMNS node
  */
-typedef struct pn_s {
-    struct pn_s	*parent;
-    struct pn_s	*next;
-    struct pn_s	*first;
-    struct pn_s	*hash;	/* used as "last" in build, then pmid hash synonym */
-    char	*name;
-    pmID	pmid;
+typedef struct __pmnsNode {
+    struct __pmnsNode	*parent;
+    struct __pmnsNode	*next;
+    struct __pmnsNode	*first;
+    struct __pmnsNode	*hash;	/* used as "last" in build, then pmid hash synonym */
+    char		*name;
+    pmID		pmid;
 } __pmnsNode;
 
 /*
  * internal structure of a PMNS tree
  */
-typedef struct {
-    __pmnsNode *root;  /* root of tree structure */
-    __pmnsNode **htab; /* hash table of nodes keyed on pmid */
-    int htabsize;     /* number of nodes in the table */
-    char *symbol;     /* store all names contiguously */
-    int contiguous;   /* is data stored contiguously ? */
-    int mark_state;   /* the total mark value for trimming */
+typedef struct __pmnsTree {
+    __pmnsNode		*root;  /* root of tree structure */
+    __pmnsNode		**htab; /* hash table of nodes keyed on pmid */
+    int			htabsize;     /* number of nodes in the table */
+    char		*symbol;     /* store all names contiguously */
+    int			contiguous;   /* is data stored contiguously ? */
+    int			mark_state;   /* the total mark value for trimming */
 } __pmnsTree;
 
 
 /* used by pmnsmerge... */
-extern __pmnsTree* __pmExportPMNS(void); 
+extern __pmnsTree *__pmExportPMNS(void); 
 
 /* for PMNS in archives */
 extern int __pmNewPMNS(__pmnsTree **);
@@ -299,13 +304,13 @@ extern void __pmDumpNameAndStatusList(FILE *, int, char **, int *);
 /*
  * Hashed Data Structures for the Processing of Logs and Archives
  */
-typedef struct _hashnode {
-    struct _hashnode	*next;
+typedef struct __pmHashNode {
+    struct __pmHashNode	*next;
     unsigned int	key;
     void		*data;
 } __pmHashNode;
 
-typedef struct {
+typedef struct __pmHashCtl {
     int			nodes;
     int			hsize;
     __pmHashNode	**hash;
@@ -412,7 +417,7 @@ extern const char *__pmFindPMDA(const char *);
 #define PM_PROFILE_EXCLUDE 1	/* exclude all, include some */
 
 /* Profile entry (per instance domain) */
-typedef struct {
+typedef struct __pmInDomProfile {
     pmInDom	indom;			/* instance domain */
     int		state;			/* include all or exclude all */
     int		instances_len;		/* length of instances array */
@@ -420,7 +425,7 @@ typedef struct {
 } __pmInDomProfile;
 
 /* Instance profile for all domains */
-typedef struct {
+typedef struct __pmProfile {
     int			state;			/* default global state */
     int			profile_len;		/* length of profile array */
     __pmInDomProfile	*profile;		/* array of instance profiles */
@@ -436,7 +441,7 @@ extern void __pmDumpProfile(FILE *, int, const __pmProfile *);
  * Result structure for instance domain queries
  * Only the PMDAs and pmcd need to know about this.
  */
-typedef struct {
+typedef struct __pmInResult {
     pmInDom	indom;		/* instance domain */
     int		numinst;	/* may be 0 */
     int		*instlist;	/* instance ids, may be NULL */
@@ -485,9 +490,26 @@ typedef struct {
     int		*ports;			/* array of host port numbers */
     int		nports;			/* number of ports in host port array */
 } pmHostSpec;
+
 extern int __pmParseHostSpec(const char *, pmHostSpec **, int *, char **);
-extern void __pmUnparseHostSpec(pmHostSpec *, int, char **, int);
+extern int __pmUnparseHostSpec(pmHostSpec *, int, char *, size_t);
 extern void __pmFreeHostSpec(pmHostSpec *, int);
+
+typedef enum {
+    PCP_ATTR_NONE = 0,
+    PCP_ATTR_PROTOCOL,
+    PCP_ATTR_COMPRESS,
+    PCP_ATTR_UNIXSOCK,
+    PCP_ATTR_USERNAME,
+    PCP_ATTR_PASSWORD,
+    PCP_ATTR_SECURE,
+} __pmHostAttributeKey;
+
+extern int __pmParseHostAttrsSpec(
+    const char *, pmHostSpec **, int *, __pmHashCtl *, char **);
+extern int __pmUnparseHostAttrsSpec(
+    pmHostSpec *, int, __pmHashCtl *, char *, size_t);
+extern void __pmFreeHostAttrsSpec(pmHostSpec *, int, __pmHashCtl *);
 
 /*
  * Control for connection to a PMCD
@@ -506,7 +528,7 @@ typedef struct {
     time_t		pc_again;	/* time to try again */
 } __pmPMCDCtl;
 
-extern int __pmConnectPMCD(pmHostSpec *, int, int);
+extern int __pmConnectPMCD(pmHostSpec *, int, int, __pmHashCtl *);
 extern int __pmConnectLocal(void);
 extern int __pmAuxConnectPMCD(const char *);
 extern int __pmAuxConnectPMCDPort(const char *, int);
@@ -598,6 +620,7 @@ typedef enum {
     PM_SERVER_FEATURE_SECURE = 0,
     PM_SERVER_FEATURE_COMPRESS,
     PM_SERVER_FEATURE_IPV6,
+    PM_SERVER_FEATURE_USER_AUTH,
     PM_SERVER_FEATURES
 } __pmServerFeature;
 
@@ -643,7 +666,8 @@ typedef struct {
     int			c_sent;		/* profile has been sent to pmcd */
     __pmProfile		*c_instprof;	/* instance profile */
     void		*c_dm;		/* derived metrics, if any */
-    int			c_flags;	/* various context flags, e.g. SECURE */
+    int			c_flags;	/* ctx flags (set via type/env/attrs) */
+    __pmHashCtl		c_attrs;	/* various optional context attributes */
 } __pmContext;
 
 #define __PM_MODE_MASK	0xffff
@@ -699,6 +723,7 @@ typedef struct {
 /* Flags for CVERSION credential PDUs, and __pmPDUInfo features */
 #define PDU_FLAG_SECURE		(1U<<0)
 #define PDU_FLAG_COMPRESS	(1U<<1)
+#define PDU_FLAG_USER_AUTH	(1U<<2)
 
 /* Credential CVERSION PDU elements look like this */
 typedef struct {
@@ -756,7 +781,8 @@ extern void __pmCountPDUBuf(int, int *, int *);
 #define PDU_PMNS_NAMES		0x700e
 #define PDU_PMNS_CHILD		0x700f
 #define PDU_PMNS_TRAVERSE	0x7010
-#define PDU_FINISH		0x7010
+#define PDU_USER_AUTH		0x7011
+#define PDU_FINISH		0x7011
 #define PDU_MAX		 	(PDU_FINISH - PDU_START)
 
 /*
@@ -812,6 +838,8 @@ extern int __pmSendChildReq(int, int, const char *, int);
 extern int __pmDecodeChildReq(__pmPDU *, char **, int *);
 extern int __pmSendTraversePMNSReq(int, int, const char *);
 extern int __pmDecodeTraversePMNSReq(__pmPDU *, char **);
+extern int __pmSendUserAuth(int, int, int, const char *);
+extern int __pmDecodeUserAuth(__pmPDU *, int *, char **);
 
 #if defined(HAVE_64BIT_LONG)
 

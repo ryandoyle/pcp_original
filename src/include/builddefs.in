@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2012 Red Hat.
+# Copyright (c) 2012-2013 Red Hat.
 # Copyright (c) 2008 Aconex.  All Rights Reserved.
 # Copyright (c) 2000,2003,2004 Silicon Graphics, Inc.  All Rights Reserved.
 # 
@@ -124,6 +124,7 @@ PIELDFLAGS = @PIELDFLAGS@
 
 NSSCFLAGS = @NSSCFLAGS@
 NSPRCFLAGS = @NSPRCFLAGS@
+SASLCFLAGS = @SASLCFLAGS@
 
 LDFLAGS += $(CFLAGS_ABI) $(PLDFLAGS) $(WARN_OFF) $(PCP_LIBS) $(LLDFLAGS)
 
@@ -143,7 +144,8 @@ OBJECTS = $(ASFILES:.s=.o) \
           $(LFILES:.l=.o) \
           $(YFILES:%.y=%.tab.o)
 
-MAKE	= @make@
+#NB: don't override $(MAKE); gnumake sets it well, propagating -j etc.
+#MAKE	= @make@
 CC	= @cc@
 LD	= @ld@
 AWK	= @awk@
@@ -160,7 +162,8 @@ INSTALL_SH = $(TOPDIR)/install-sh
 INSTALL	= $(INSTALL_SH) -o @pcp_owner@ -g @pcp_group@
 
 CCF	= $(CC) $(CFLAGS)
-MAKEF	= $(MAKE) $(MAKEOPTS)
+# NB: don't use $(MAKEF), since that suppresses gnumake's subdir parallelization
+#MAKEF	= $(MAKE) $(MAKEOPTS)
 LDF	= $(LD) $(LDFLAGS)
 MAKEDEPEND = @makedepend@
 
@@ -202,9 +205,13 @@ LIB_FOR_MATH = @lib_for_math@
 LIB_FOR_READLINE = @lib_for_readline@
 LIB_FOR_CURSES = @lib_for_curses@
 LIB_FOR_PTHREADS = @lib_for_pthreads@
+LIB_FOR_RT = @lib_for_rt@
 LIB_FOR_NSS = @lib_for_nss@
 LIB_FOR_NSPR = @lib_for_nspr@
+LIB_FOR_SASL = @lib_for_sasl@
 LIB_FOR_SSL = @lib_for_ssl@
+
+HAVE_LIBMICROHTTPD = @HAVE_LIBMICROHTTPD@
 
 SHELL = /bin/sh
 IMAGES_DIR = $(TOPDIR)/all-images
@@ -227,12 +234,23 @@ RUN_IN_BUILD_ENV = PCP_CONF=$(TOPDIR)/src/include/pcp.conf PATH=$(TOPDIR)/src/li
 endif
 
 SUBDIRS_MAKERULE = \
-	@for d in `echo $^ `; do \
+	+for d in `echo $^ `; do \
 	    if test -d "$$d" -a -f "$$d/GNUmakefile"; then \
 		$(ECHO) === $$d ===; \
-		$(MAKEF) -C $$d $@ || exit $$?; \
+		$(MAKE) $(MAKEOPTS) -C $$d $@ || exit $$?; \
 	    fi; \
 	done
+
+ifneq "$(LIBTARGET)" ""
+LIBLINK_MAKERULE = \
+	@rm -f $(TOPDIR)/src/lib/$(LIBTARGET) \
+	$(LN_S) -f $(shell pwd)/$(LIBTARGET) $(TOPDIR)/src/lib
+endif
+ifneq "$(STATICLIBTARGET)" ""
+STATIC_LIBLINK_MAKERULE = \
+	@rm -f $(TOPDIR)/src/lib/$(STATICLIBTARGET) \
+	$(LN_S) -f $(shell pwd)/$(STATICLIBTARGET) $(TOPDIR)/src/lib
+endif
 
 DOMAIN_MAKERULE = \
 	@rm -f domain.h; \
@@ -278,6 +296,33 @@ DOMAIN_PERLRULE = \
 		}\
 		if (pmd != "'"$$perldomain"'") {\
 		    print "Botch: domain number in ../../pmns/stdpmid (" pmd ") does not match domain number in Perl source ("'"$$perldomain"'")"; \
+		    exit(1) \
+		}\
+		exit(0) \
+	    }'
+
+DOMAIN_PYTHONRULE = \
+	@export pythondomain=`sed -n \
+		-e '/PMDA(/s/[^0-9]*$//' \
+		-e '/PMDA(/s/^[^0-9]*//p' pmda$(IAM).py`; \
+	$(AWK) <$< '\
+	    BEGIN {\
+		domain = toupper("$(IAM)") \
+	    }\
+	    $$1=="\#define" && $$2 == domain { \
+		pmd=$$3; found++ \
+	    }\
+	    END {\
+		if (found == 0) {\
+		    print "Botch: no define for domain " domain " in $<"; \
+		    exit(1) \
+		}\
+	        if (found > 1) {\
+		    print "Botch: multiple defines of domain " domain " in $<";\
+		    exit(1) \
+		}\
+		if (pmd != "'"$$pythondomain"'") {\
+		    print "Botch: domain number in ../../pmns/stdpmid (" pmd ") does not match domain number in Python source ("'"$$pythondomain"'")"; \
 		    exit(1) \
 		}\
 		exit(0) \
@@ -454,7 +499,7 @@ PMDA_SYSTEMD=@PMDA_SYSTEMD@
 PYTHON=@PYTHON@
 PYTHON_PREFIX=@python_prefix@
 SETUP_PY_BUILD_OPTIONS = --include-dirs=$(TOPDIR)/src/include
-SETUP_PY_BUILD_OPTIONS += --library-dirs=$(TOPDIR)/src/libpcp/src
+SETUP_PY_BUILD_OPTIONS += --library-dirs=$(TOPDIR)/src/lib
 SETUP_PY_INSTALL_OPTIONS = --skip-build
 SETUP_PY_INSTALL_OPTIONS += --root=$${DIST_ROOT-/}
 SETUP_PY_INSTALL_OPTIONS += --record=$(TOPDIR)/python-pcp.list
