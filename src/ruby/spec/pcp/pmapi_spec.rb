@@ -71,4 +71,14 @@ describe PCP::PMAPI do
     end
   end
 
+  describe '#pm_get_context_hostname' do
+
+    let(:pmapi) { PCP::PMAPI.new(PCP::PMAPI::PM_CONTEXT_HOST, "localhost") }
+
+
+    it 'should return the hostname of the created context' do
+      expect(pmapi.pm_get_context_hostname).to eq 'ryandesktop'
+    end
+  end
+
 end

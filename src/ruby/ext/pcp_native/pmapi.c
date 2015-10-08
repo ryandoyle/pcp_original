@@ -19,6 +19,10 @@ VALUE pcp_module = Qnil;
 VALUE pcp_pmapi_class = Qnil;
 VALUE pcp_metric_source_failed = Qnil;
 
+#ifdef DEBUG
+pmDebug = 16;
+#endif
+
 typedef struct {
     int pm_context;
 } PmApi_Context;
@@ -70,15 +74,13 @@ static VALUE native_pm_new_context(VALUE self, VALUE metric_source, VALUE metric
     return self;
 }
 
-//static VALUE native_pm_lookup_name(VALUE self, VALUE name) {
-//    VALUE result_buffer = rb_str_buf_new(strlen(StringValuePtr(name)));
-//    pmID * pmid;
-//
-//    use_context(self);
-//
-//    pmLookupName(1, StriVP);
-//
-//}
+static VALUE native_pm_get_context_hostname_r(VALUE self) {
+    char result_buffer[MAXHOSTNAMELEN];
+
+    pmGetContextHostName_r(get_context(self), (char *)&result_buffer, MAXHOSTNAMELEN);
+
+    return rb_tainted_str_new_cstr(result_buffer);
+}
 
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
@@ -106,6 +108,7 @@ void Init_pcp_native() {
 
     rb_define_alloc_func(pcp_pmapi_class, allocate);
     rb_define_method(pcp_pmapi_class, "native_pm_new_context", native_pm_new_context, 2);
+    rb_define_method(pcp_pmapi_class, "native_pm_get_context_hostname_r", native_pm_get_context_hostname_r, 0);
 
 }
 
