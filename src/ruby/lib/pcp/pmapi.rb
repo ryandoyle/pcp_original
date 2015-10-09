@@ -7,13 +7,10 @@ module PCP
       unless(metric_source_argument.class == String || metric_source_argument == nil)
         raise TypeError, 'Metric source argument should be String or Nil' unless metric_source_argument
       end
-      native_pm_new_context(metric_source, metric_source_argument)
+      pmNewContext(metric_source, metric_source_argument)
     end
 
-    def pm_get_context_hostname_r
-      native_pm_get_context_hostname_r
-    end
-    alias_method :pm_get_context_hostname, :pm_get_context_hostname_r
+    alias_method :pmGetContextHostName, :pmGetContextHostName_r
 
   end
 end

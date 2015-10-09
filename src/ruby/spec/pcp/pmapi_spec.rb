@@ -77,7 +77,7 @@ describe PCP::PMAPI do
 
 
     it 'should return the hostname of the created context' do
-      expect(pmapi.pm_get_context_hostname).to eq 'ryandesktop'
+      expect(pmapi.pmGetContextHostName_r).to eq 'ryandesktop'
     end
   end
 

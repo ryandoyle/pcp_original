@@ -48,7 +48,7 @@ static void use_context(VALUE self) {
     pmUseContext(get_context(self));
 }
 
-static VALUE native_pm_new_context(VALUE self, VALUE metric_source, VALUE metric_source_argument) {
+static VALUE rb_pmNewContext(VALUE self, VALUE metric_source, VALUE metric_source_argument) {
     int pm_context, pm_metric_source;
     char *pm_metric_source_argument = NULL;
     PmApi_Context *pmapi_context;
@@ -74,7 +74,7 @@ static VALUE native_pm_new_context(VALUE self, VALUE metric_source, VALUE metric
     return self;
 }
 
-static VALUE native_pm_get_context_hostname_r(VALUE self) {
+static VALUE rb_pmGetContextHostName_r(VALUE self) {
     char result_buffer[MAXHOSTNAMELEN];
 
     pmGetContextHostName_r(get_context(self), (char *)&result_buffer, MAXHOSTNAMELEN);
@@ -109,8 +109,8 @@ void Init_pcp_native() {
     rb_define_const(pcp_pmapi_class, "PM_CTXFLAG_CONTAINER", INT2NUM(PM_CTXFLAG_CONTAINER));
 
     rb_define_alloc_func(pcp_pmapi_class, allocate);
-    rb_define_private_method(pcp_pmapi_class, "native_pm_new_context", native_pm_new_context, 2);
-    rb_define_private_method(pcp_pmapi_class, "native_pm_get_context_hostname_r", native_pm_get_context_hostname_r, 0);
+    rb_define_private_method(pcp_pmapi_class, "pmNewContext", rb_pmNewContext, 2);
+    rb_define_method(pcp_pmapi_class, "pmGetContextHostName_r", rb_pmGetContextHostName_r, 0);
 
 }
 
