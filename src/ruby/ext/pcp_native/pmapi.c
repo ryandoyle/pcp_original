@@ -106,6 +106,13 @@ void Init_pcp_native() {
     rb_define_const(pcp_pmapi_class, "PM_SPACE_PBYTE", INT2NUM(PM_SPACE_PBYTE));
     rb_define_const(pcp_pmapi_class, "PM_SPACE_EBYTE", INT2NUM(PM_SPACE_EBYTE));
 
+    rb_define_const(pcp_pmapi_class, "PM_TIME_NSEC", INT2NUM(PM_TIME_NSEC));
+    rb_define_const(pcp_pmapi_class, "PM_TIME_USEC", INT2NUM(PM_TIME_USEC));
+    rb_define_const(pcp_pmapi_class, "PM_TIME_MSEC", INT2NUM(PM_TIME_MSEC));
+    rb_define_const(pcp_pmapi_class, "PM_TIME_SEC", INT2NUM(PM_TIME_SEC));
+    rb_define_const(pcp_pmapi_class, "PM_TIME_MIN", INT2NUM(PM_TIME_MIN));
+    rb_define_const(pcp_pmapi_class, "PM_TIME_HOUR", INT2NUM(PM_TIME_HOUR));
+
     rb_define_const(pcp_pmapi_class, "PM_CONTEXT_UNDEF", INT2NUM(PM_CONTEXT_UNDEF));
     rb_define_const(pcp_pmapi_class, "PM_CONTEXT_HOST", INT2NUM(PM_CONTEXT_HOST));
     rb_define_const(pcp_pmapi_class, "PM_CONTEXT_ARCHIVE", INT2NUM(PM_CONTEXT_ARCHIVE));
