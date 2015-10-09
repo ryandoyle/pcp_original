@@ -82,6 +82,15 @@ static VALUE rb_pmGetContextHostName_r(VALUE self) {
     return rb_tainted_str_new_cstr(result_buffer);
 }
 
+static VALUE rb_pmGetPMNSLocation(VALUE self) {
+    int pmns_location;
+
+    use_context(self);
+
+    pmns_location = pmGetPMNSLocation();
+
+    return INT2NUM(pmns_location);
+}
 
 
 void Init_pcp_native() {
@@ -108,9 +117,67 @@ void Init_pcp_native() {
     rb_define_const(pcp_pmapi_class, "PM_CTXFLAG_AUTH", INT2NUM(PM_CTXFLAG_AUTH));
     rb_define_const(pcp_pmapi_class, "PM_CTXFLAG_CONTAINER", INT2NUM(PM_CTXFLAG_CONTAINER));
 
+    rb_define_const(pcp_pmapi_class, "PMNS_LOCAL", INT2NUM(PMNS_LOCAL));
+    rb_define_const(pcp_pmapi_class, "PMNS_REMOTE", INT2NUM(PMNS_REMOTE));
+    rb_define_const(pcp_pmapi_class, "PMNS_ARCHIVE", INT2NUM(PMNS_ARCHIVE));
+
+    rb_define_const(pcp_pmapi_class, "PM_ERR_GENERIC", INT2NUM(PM_ERR_GENERIC));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_PMNS", INT2NUM(PM_ERR_PMNS));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NOPMNS", INT2NUM(PM_ERR_NOPMNS));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_DUPPMNS", INT2NUM(PM_ERR_DUPPMNS));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_TEXT", INT2NUM(PM_ERR_TEXT));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_APPVERSION", INT2NUM(PM_ERR_APPVERSION));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_VALUE", INT2NUM(PM_ERR_VALUE));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_TIMEOUT", INT2NUM(PM_ERR_TIMEOUT));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NODATA", INT2NUM(PM_ERR_NODATA));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_RESET", INT2NUM(PM_ERR_RESET));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NAME", INT2NUM(PM_ERR_NAME));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_PMID", INT2NUM(PM_ERR_PMID));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_INDOM", INT2NUM(PM_ERR_INDOM));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_INST", INT2NUM(PM_ERR_INST));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_UNIT", INT2NUM(PM_ERR_UNIT));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_CONV", INT2NUM(PM_ERR_CONV));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_TRUNC", INT2NUM(PM_ERR_TRUNC));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_SIGN", INT2NUM(PM_ERR_SIGN));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_PROFILE", INT2NUM(PM_ERR_PROFILE));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_IPC", INT2NUM(PM_ERR_IPC));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_EOF", INT2NUM(PM_ERR_EOF));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NOTHOST", INT2NUM(PM_ERR_NOTHOST));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_EOL", INT2NUM(PM_ERR_EOL));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_MODE", INT2NUM(PM_ERR_MODE));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_LABEL", INT2NUM(PM_ERR_LABEL));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_LOGREC", INT2NUM(PM_ERR_LOGREC));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NOTARCHIVE", INT2NUM(PM_ERR_NOTARCHIVE));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_LOGFILE", INT2NUM(PM_ERR_LOGFILE));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NOCONTEXT", INT2NUM(PM_ERR_NOCONTEXT));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_PROFILESPEC", INT2NUM(PM_ERR_PROFILESPEC));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_PMID_LOG", INT2NUM(PM_ERR_PMID_LOG));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_INDOM_LOG", INT2NUM(PM_ERR_INDOM_LOG));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_INST_LOG", INT2NUM(PM_ERR_INST_LOG));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NOPROFILE", INT2NUM(PM_ERR_NOPROFILE));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NOAGENT", INT2NUM(PM_ERR_NOAGENT));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_PERMISSION", INT2NUM(PM_ERR_PERMISSION));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_CONNLIMIT", INT2NUM(PM_ERR_CONNLIMIT));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_AGAIN", INT2NUM(PM_ERR_AGAIN));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_ISCONN", INT2NUM(PM_ERR_ISCONN));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NOTCONN", INT2NUM(PM_ERR_NOTCONN));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NEEDPORT", INT2NUM(PM_ERR_NEEDPORT));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NONLEAF", INT2NUM(PM_ERR_NONLEAF));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_TYPE", INT2NUM(PM_ERR_TYPE));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_THREAD", INT2NUM(PM_ERR_THREAD));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NOCONTAINER", INT2NUM(PM_ERR_NOCONTAINER));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_BADSTORE", INT2NUM(PM_ERR_BADSTORE));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_TOOSMALL", INT2NUM(PM_ERR_TOOSMALL));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_TOOBIG", INT2NUM(PM_ERR_TOOBIG));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_FAULT", INT2NUM(PM_ERR_FAULT));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_PMDAREADY", INT2NUM(PM_ERR_PMDAREADY));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_PMDANOTREADY", INT2NUM(PM_ERR_PMDANOTREADY));
+    rb_define_const(pcp_pmapi_class, "PM_ERR_NYI", INT2NUM(PM_ERR_NYI));
+
     rb_define_alloc_func(pcp_pmapi_class, allocate);
     rb_define_private_method(pcp_pmapi_class, "pmNewContext", rb_pmNewContext, 2);
     rb_define_method(pcp_pmapi_class, "pmGetContextHostName_r", rb_pmGetContextHostName_r, 0);
+    rb_define_method(pcp_pmapi_class, "pmGetPMNSLocation", rb_pmGetPMNSLocation, 0);
 
 }
 
