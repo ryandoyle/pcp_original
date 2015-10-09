@@ -82,6 +82,8 @@ static VALUE native_pm_get_context_hostname_r(VALUE self) {
     return rb_tainted_str_new_cstr(result_buffer);
 }
 
+
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_metric_source_failed = rb_define_class_under(pcp_module, "MetricSourceFailed", rb_eStandardError);
@@ -107,8 +109,8 @@ void Init_pcp_native() {
     rb_define_const(pcp_pmapi_class, "PM_CTXFLAG_CONTAINER", INT2NUM(PM_CTXFLAG_CONTAINER));
 
     rb_define_alloc_func(pcp_pmapi_class, allocate);
-    rb_define_method(pcp_pmapi_class, "native_pm_new_context", native_pm_new_context, 2);
-    rb_define_method(pcp_pmapi_class, "native_pm_get_context_hostname_r", native_pm_get_context_hostname_r, 0);
+    rb_define_private_method(pcp_pmapi_class, "native_pm_new_context", native_pm_new_context, 2);
+    rb_define_private_method(pcp_pmapi_class, "native_pm_get_context_hostname_r", native_pm_get_context_hostname_r, 0);
 
 }
 
