@@ -18,6 +18,7 @@
 VALUE pcp_module = Qnil;
 VALUE pcp_pmapi_class = Qnil;
 VALUE pcp_metric_source_failed = Qnil;
+VALUE pcp_pmapi_namespace_load_error = Qnil;
 
 #ifdef DEBUG
 pmDebug = 16;
@@ -92,11 +93,25 @@ static VALUE rb_pmGetPMNSLocation(VALUE self) {
     return INT2NUM(pmns_location);
 }
 
+static VALUE rb_pmLoadNameSpace(VALUE self, VALUE filename) {
+    int error;
+    char errmsg[PM_MAXERRMSGLEN];
+
+    use_context(self);
+
+    error = pmLoadNameSpace(StringValuePtr(filename));
+    if(error < 0 ) {
+        rb_raise(pcp_pmapi_namespace_load_error, (const char *)pmErrStr_r(error, (char *)&errmsg, sizeof(errmsg)));
+    }
+
+    return Qnil;
+}
 
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_metric_source_failed = rb_define_class_under(pcp_module, "MetricSourceFailed", rb_eStandardError);
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
+    pcp_pmapi_namespace_load_error = rb_define_class_under(pcp_pmapi_class, "NamespaceLoadError", rb_eStandardError);
 
     rb_define_const(pcp_pmapi_class, "PM_SPACE_BYTE", INT2NUM(PM_SPACE_BYTE));
     rb_define_const(pcp_pmapi_class, "PM_SPACE_KBYTE", INT2NUM(PM_SPACE_KBYTE));
@@ -185,6 +200,7 @@ void Init_pcp_native() {
     rb_define_private_method(pcp_pmapi_class, "pmNewContext", rb_pmNewContext, 2);
     rb_define_method(pcp_pmapi_class, "pmGetContextHostName_r", rb_pmGetContextHostName_r, 0);
     rb_define_method(pcp_pmapi_class, "pmGetPMNSLocation", rb_pmGetPMNSLocation, 0);
+    rb_define_method(pcp_pmapi_class, "pmLoadNameSpace", rb_pmLoadNameSpace, 1);
 
 }
 

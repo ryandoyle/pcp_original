@@ -119,6 +119,12 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmLoadNameSpace' do
+      it 'should raise an error for non-existent files' do
+        expect{pmapi.pmLoadNameSpace('some-namespace-that-doesnt-exist.txt')}.to raise_error PCP::PMAPI::NamespaceLoadError
+      end
+    end
+
   end
 
 end

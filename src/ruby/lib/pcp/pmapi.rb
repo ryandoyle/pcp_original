@@ -11,6 +11,7 @@ module PCP
     end
 
     alias_method :pmGetContextHostName, :pmGetContextHostName_r
+    alias_method :pmLoadASCIINameSpace, :pmLoadNameSpace
 
   end
 end
