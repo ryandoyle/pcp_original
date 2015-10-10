@@ -125,6 +125,13 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmUnloadNameSpace' do
+      it 'should raise an error for non-existent files' do
+        expect{pmapi.pmUnloadNameSpace}.to_not raise_error
+      end
+    end
+
+
   end
 
 end

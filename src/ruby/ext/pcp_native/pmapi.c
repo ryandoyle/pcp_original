@@ -107,6 +107,14 @@ static VALUE rb_pmLoadNameSpace(VALUE self, VALUE filename) {
     return Qnil;
 }
 
+static VALUE rb_pmUnloadNameSpace(VALUE self) {
+    use_context(self);
+
+    pmUnloadNameSpace();
+
+    return Qnil;
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_metric_source_failed = rb_define_class_under(pcp_module, "MetricSourceFailed", rb_eStandardError);
@@ -201,6 +209,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmGetContextHostName_r", rb_pmGetContextHostName_r, 0);
     rb_define_method(pcp_pmapi_class, "pmGetPMNSLocation", rb_pmGetPMNSLocation, 0);
     rb_define_method(pcp_pmapi_class, "pmLoadNameSpace", rb_pmLoadNameSpace, 1);
+    rb_define_method(pcp_pmapi_class, "pmUnloadNameSpace", rb_pmUnloadNameSpace, 0);
 
 }
 
