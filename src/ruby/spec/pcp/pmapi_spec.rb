@@ -131,6 +131,12 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmTrimNameSpace' do
+      it 'should not raise an error' do
+        expect{pmapi.pmTrimNameSpace}.to_not raise_error
+      end
+    end
+
 
   end
 
