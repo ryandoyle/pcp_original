@@ -188,6 +188,15 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmNameAll' do
+      it 'returns all the names for a PMID' do
+        expect(pmapi.pmNameAll(121634817)).to eq ["sample.dupnames.pid_daemon", "sample.dupnames.daemon_pid", "sample.daemon_pid"]
+      end
+      it 'raises an error for invalid PMIDs' do
+        expect{pmapi.pmNameAll(123456)}.to raise_error PCP::PMAPI::InvalidPMIDError
+      end
+    end
+
 
   end
 
