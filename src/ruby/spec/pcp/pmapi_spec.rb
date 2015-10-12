@@ -86,6 +86,9 @@ describe PCP::PMAPI do
       PCP::PMAPI::PM_ERR_PMDAREADY,
       PCP::PMAPI::PM_ERR_PMDANOTREADY,
       PCP::PMAPI::PM_ERR_NYI,
+
+      PCP::PMAPI::PMNS_LEAF_STATUS,
+      PCP::PMAPI::PMNS_NONLEAF_STATUS,
     ].each do |constant|
       it "should be numeric" do
         expect(constant).to be_a_kind_of Integer
@@ -146,6 +149,33 @@ describe PCP::PMAPI do
       end
       it 'should raise an error for unknown names' do
         expect{pmapi.pmLookupName(['something.that.doesnt.exist'])}.to raise_error PCP::PMAPI::Error
+      end
+    end
+
+    describe '#pmGetChildren' do
+      it 'should return immediate children of the metric' do
+        expect(pmapi.pmGetChildren('swap')).to eq ["pagesin", "pagesout", "in", "out", "free", "length", "used"]
+      end
+      it 'should raise an error for invalid metrics' do
+        expect{pmapi.pmGetChildren('invalid.metric.name')}.to raise_error PCP::PMAPI::Error
+      end
+      it 'should return an empty list for metrics that are leaf nodes' do
+        expect(pmapi.pmGetChildren('swap.used')).to eq []
+      end
+    end
+
+    describe '#pmGetChildrenStatus' do
+      it 'should return the children and their status type' do
+        expect(pmapi.pmGetChildrenStatus('swap')).to eq [{"pagesin"=>0}, {"pagesout"=>0}, {"in"=>0}, {"out"=>0}, {"free"=>0}, {"length"=>0}, {"used"=>0}]
+      end
+      it 'should return children with a status flag indicating they are non-leaf nodes' do
+        expect(pmapi.pmGetChildrenStatus('disk')).to eq [{"dev"=>1}, {"all"=>1}, {"partitions"=>1}, {"dm"=>1}]
+      end
+      it 'should return an empty list for metrics that are leaf nodes' do
+        expect(pmapi.pmGetChildrenStatus('swap.used')).to eq []
+      end
+      it 'should raise an error for invalid metrics' do
+        expect{pmapi.pmGetChildrenStatus('invalid.metric.name')}.to raise_error PCP::PMAPI::Error
       end
     end
 

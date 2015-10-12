@@ -170,6 +170,65 @@ static VALUE rb_pmLookupName(VALUE self, VALUE names) {
     return result;
 }
 
+static VALUE rb_pmGetChildren(VALUE self, VALUE root_name) {
+
+    char ** offspring;
+    int number_of_children, error, i;
+    VALUE children_names;
+
+    use_context(self);
+
+    children_names = rb_ary_new();
+
+    if((error = pmGetChildren(StringValueCStr(root_name), &offspring)) < 0 ) {
+        raise_error(error);
+    } else {
+        number_of_children = error;
+        for(i = 0; i < number_of_children; i++) {
+            rb_ary_push(children_names, rb_tainted_str_new_cstr(offspring[i]));
+        }
+    }
+
+    if(number_of_children > 0) {
+        free(offspring);
+    }
+
+    return children_names;
+}
+
+static VALUE rb_pmGetChildrenStatus(VALUE self, VALUE root_name) {
+
+    char ** offspring;
+    int * offspring_leaf_status;
+    int number_of_children, error, i;
+    VALUE children_names_and_status;
+
+    use_context(self);
+
+    children_names_and_status = rb_ary_new();
+
+    if((error = pmGetChildrenStatus(StringValueCStr(root_name), &offspring, &offspring_leaf_status)) < 0 ) {
+        raise_error(error);
+    } else {
+        number_of_children = error;
+        for(i = 0; i < number_of_children; i++) {
+            VALUE child_hash = rb_hash_new();
+            VALUE child_name = rb_tainted_str_new_cstr(offspring[i]);
+            VALUE child_status = INT2NUM(offspring_leaf_status[i]);
+            rb_hash_aset(child_hash, child_name, child_status);
+            rb_ary_push(children_names_and_status, child_hash);
+        }
+    }
+
+    if(number_of_children > 0) {
+        free(offspring);
+        free(offspring_leaf_status);
+    }
+
+    return children_names_and_status;
+}
+
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_metric_source_failed = rb_define_class_under(pcp_module, "MetricSourceFailed", rb_eStandardError);
@@ -260,6 +319,9 @@ void Init_pcp_native() {
     rb_define_const(pcp_pmapi_class, "PM_ERR_PMDANOTREADY", INT2NUM(PM_ERR_PMDANOTREADY));
     rb_define_const(pcp_pmapi_class, "PM_ERR_NYI", INT2NUM(PM_ERR_NYI));
 
+    rb_define_const(pcp_pmapi_class, "PMNS_LEAF_STATUS", INT2NUM(PMNS_LEAF_STATUS));
+    rb_define_const(pcp_pmapi_class, "PMNS_NONLEAF_STATUS", INT2NUM(PMNS_NONLEAF_STATUS));
+
     rb_define_alloc_func(pcp_pmapi_class, allocate);
     rb_define_private_method(pcp_pmapi_class, "pmNewContext", rb_pmNewContext, 2);
     rb_define_method(pcp_pmapi_class, "pmGetContextHostName_r", rb_pmGetContextHostName_r, 0);
@@ -268,6 +330,8 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmUnloadNameSpace", rb_pmUnloadNameSpace, 0);
     rb_define_method(pcp_pmapi_class, "pmTrimNameSpace", rb_pmTrimNameSpace, 0);
     rb_define_method(pcp_pmapi_class, "pmLookupName", rb_pmLookupName, 1);
+    rb_define_method(pcp_pmapi_class, "pmGetChildren", rb_pmGetChildren, 1);
+    rb_define_method(pcp_pmapi_class, "pmGetChildrenStatus", rb_pmGetChildrenStatus, 1);
 
 }
 
