@@ -137,6 +137,17 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmLookupName' do
+      it 'should fetch a single metric PMID' do
+        expect(pmapi.pmLookupName(['disk.all.read'])).to eq [{"disk.all.read"=>251658264}]
+      end
+      it 'should fetch multiple metric PMIDs' do
+        expect(pmapi.pmLookupName(['disk.all.read', 'disk.all.write'])).to eq [{"disk.all.read"=>251658264}, {"disk.all.write"=>251658265}]
+      end
+      it 'should raise an error for unknown names' do
+        expect{pmapi.pmLookupName(['something.that.doesnt.exist'])}.to raise_error PCP::PMAPI::Error
+      end
+    end
 
   end
 

@@ -19,10 +19,12 @@ VALUE pcp_module = Qnil;
 VALUE pcp_pmapi_class = Qnil;
 VALUE pcp_metric_source_failed = Qnil;
 VALUE pcp_pmapi_namespace_load_error = Qnil;
+VALUE pcp_pmapi_error = Qnil;
 
-#ifdef DEBUG
-pmDebug = 16;
-#endif
+//#ifdef DEBUG
+#include <pcp/impl.h>
+pmDebug = DBG_TRACE_CONTEXT && DBG_TRACE_PMNS;
+//#endif
 
 typedef struct {
     int pm_context;
@@ -47,6 +49,11 @@ static int get_context(VALUE self) {
 
 static void use_context(VALUE self) {
     pmUseContext(get_context(self));
+}
+
+static void raise_error(int error_number) {
+    char errmsg[PM_MAXERRMSGLEN];
+    rb_raise(pcp_pmapi_error, (const char *)pmErrStr_r(error_number, (char *)&errmsg, sizeof(errmsg)));
 }
 
 static VALUE rb_pmNewContext(VALUE self, VALUE metric_source, VALUE metric_source_argument) {
@@ -123,11 +130,52 @@ static VALUE rb_pmTrimNameSpace(VALUE self) {
     return Qnil;
 }
 
+static VALUE rb_pmLookupName(VALUE self, VALUE names) {
+
+    int number_of_names, error;
+    char ** namelist;
+    pmID * pmidlist;
+    long i;
+    VALUE result;
+
+    use_context(self);
+
+    number_of_names = RARRAY_LENINT(names);
+    namelist = malloc(sizeof(char *) * number_of_names);
+    pmidlist = malloc(sizeof(pmID) * number_of_names);
+    result = rb_ary_new2(number_of_names);
+
+    /* Populate name list */
+    for(i = 0; i < number_of_names; i++) {
+        namelist[i] = RSTRING_PTR(rb_ary_entry(names, i));
+    }
+
+    error = pmLookupName(number_of_names, namelist, pmidlist);
+    if(error < 0 ) {
+        raise_error(error);
+    } else {
+        /* Build up the array of hashes to return */
+        for(i = 0; i < number_of_names; i++) {
+            VALUE hash = rb_hash_new();
+            VALUE hash_key = rb_ary_entry(names, i);
+            VALUE pmid = UINT2NUM(pmidlist[i]);
+            rb_hash_aset(hash, hash_key, pmid);
+            rb_ary_push(result, hash);
+        }
+    }
+
+    free(namelist);
+    free(pmidlist);
+
+    return result;
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_metric_source_failed = rb_define_class_under(pcp_module, "MetricSourceFailed", rb_eStandardError);
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
     pcp_pmapi_namespace_load_error = rb_define_class_under(pcp_pmapi_class, "NamespaceLoadError", rb_eStandardError);
+    pcp_pmapi_error = rb_define_class_under(pcp_pmapi_class, "Error", rb_eStandardError);
 
     rb_define_const(pcp_pmapi_class, "PM_SPACE_BYTE", INT2NUM(PM_SPACE_BYTE));
     rb_define_const(pcp_pmapi_class, "PM_SPACE_KBYTE", INT2NUM(PM_SPACE_KBYTE));
@@ -219,6 +267,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmLoadNameSpace", rb_pmLoadNameSpace, 1);
     rb_define_method(pcp_pmapi_class, "pmUnloadNameSpace", rb_pmUnloadNameSpace, 0);
     rb_define_method(pcp_pmapi_class, "pmTrimNameSpace", rb_pmTrimNameSpace, 0);
+    rb_define_method(pcp_pmapi_class, "pmLookupName", rb_pmLookupName, 1);
 
 }
 
