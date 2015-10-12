@@ -268,6 +268,21 @@ static VALUE rb_pmNameAll(VALUE self, VALUE pmid) {
     return result;
 }
 
+static void dometric(const char * name) {
+    rb_yield(rb_tainted_str_new_cstr(name));
+}
+
+static VALUE rb_pmTraversePMNS(VALUE self, VALUE name) {
+    int error;
+
+    use_context(self);
+
+    if((error = pmTraversePMNS(StringValueCStr(name), dometric)) < 0) {
+        raise_error(error, pcp_pmapi_error);
+    }
+
+    return Qnil;
+}
 
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
@@ -375,6 +390,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmGetChildrenStatus", rb_pmGetChildrenStatus, 1);
     rb_define_method(pcp_pmapi_class, "pmNameID", rb_pmNameID, 1);
     rb_define_method(pcp_pmapi_class, "pmNameAll", rb_pmNameAll, 1);
+    rb_define_method(pcp_pmapi_class, "pmTraversePMNS", rb_pmTraversePMNS, 1);
 
 }
 

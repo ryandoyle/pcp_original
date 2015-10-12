@@ -197,6 +197,15 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmTraversePMNS' do
+      it 'yields when traversing the PMNS namespace' do
+        expect { |b| pmapi.pmTraversePMNS('swap', &b) }.to yield_successive_args("swap.pagesin", "swap.pagesout", "swap.in", "swap.out", "swap.free", "swap.length", "swap.used")
+      end
+      it 'raises an error for invalid metric IDs' do
+        expect{ pmapi.pmTraversePMNS('some.invalid.name') }.to raise_error PCP::PMAPI::Error
+      end
+    end
+
 
   end
 
