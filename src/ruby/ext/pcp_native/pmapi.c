@@ -228,14 +228,14 @@ static VALUE rb_pmGetChildrenStatus(VALUE self, VALUE root_name) {
     return children_names_and_status;
 }
 
-static VALUE rb_pmNameID(VALUE self, VALUE rb_pmid) {
+static VALUE rb_pmNameID(VALUE self, VALUE pmid) {
     int error;
     char *name_result;
     VALUE result;
 
     use_context(self);
 
-    if((error = pmNameID(NUM2UINT(rb_pmid), &name_result)) < 0) {
+    if((error = pmNameID(NUM2UINT(pmid), &name_result)) < 0) {
         raise_error(error, pcp_pmapi_invalid_pmid_error);
         return Qnil;
     } else {
