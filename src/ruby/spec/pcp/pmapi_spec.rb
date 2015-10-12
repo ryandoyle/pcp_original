@@ -179,6 +179,16 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmNameID' do
+      it 'returns the name for a pmid' do
+        expect(pmapi.pmNameID(251658264)).to eq 'disk.all.read'
+      end
+      it 'raises an error for invalid PMIDs' do
+        expect{pmapi.pmNameID(123456)}.to raise_error PCP::PMAPI::InvalidPMIDError
+      end
+    end
+
+
   end
 
 end

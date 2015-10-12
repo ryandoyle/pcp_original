@@ -20,6 +20,7 @@ VALUE pcp_pmapi_class = Qnil;
 VALUE pcp_metric_source_failed = Qnil;
 VALUE pcp_pmapi_namespace_load_error = Qnil;
 VALUE pcp_pmapi_error = Qnil;
+VALUE pcp_pmapi_invalid_pmid_error = Qnil;
 
 //#ifdef DEBUG
 #include <pcp/impl.h>
@@ -51,9 +52,9 @@ static void use_context(VALUE self) {
     pmUseContext(get_context(self));
 }
 
-static void raise_error(int error_number) {
+static void raise_error(int error_number, VALUE error_type) {
     char errmsg[PM_MAXERRMSGLEN];
-    rb_raise(pcp_pmapi_error, (const char *)pmErrStr_r(error_number, (char *)&errmsg, sizeof(errmsg)));
+    rb_raise(error_type, (const char *)pmErrStr_r(error_number, (char *)&errmsg, sizeof(errmsg)));
 }
 
 static VALUE rb_pmNewContext(VALUE self, VALUE metric_source, VALUE metric_source_argument) {
@@ -102,13 +103,12 @@ static VALUE rb_pmGetPMNSLocation(VALUE self) {
 
 static VALUE rb_pmLoadNameSpace(VALUE self, VALUE filename) {
     int error;
-    char errmsg[PM_MAXERRMSGLEN];
 
     use_context(self);
 
     error = pmLoadNameSpace(StringValuePtr(filename));
     if(error < 0 ) {
-        rb_raise(pcp_pmapi_namespace_load_error, (const char *)pmErrStr_r(error, (char *)&errmsg, sizeof(errmsg)));
+        raise_error(error, pcp_pmapi_namespace_load_error);
     }
 
     return Qnil;
@@ -152,7 +152,7 @@ static VALUE rb_pmLookupName(VALUE self, VALUE names) {
 
     error = pmLookupName(number_of_names, namelist, pmidlist);
     if(error < 0 ) {
-        raise_error(error);
+        raise_error(error, pcp_pmapi_error);
     } else {
         /* Build up the array of hashes to return */
         for(i = 0; i < number_of_names; i++) {
@@ -181,7 +181,7 @@ static VALUE rb_pmGetChildren(VALUE self, VALUE root_name) {
     children_names = rb_ary_new();
 
     if((error = pmGetChildren(StringValueCStr(root_name), &offspring)) < 0 ) {
-        raise_error(error);
+        raise_error(error, pcp_pmapi_error);
     } else {
         number_of_children = error;
         for(i = 0; i < number_of_children; i++) {
@@ -208,7 +208,7 @@ static VALUE rb_pmGetChildrenStatus(VALUE self, VALUE root_name) {
     children_names_and_status = rb_ary_new();
 
     if((error = pmGetChildrenStatus(StringValueCStr(root_name), &offspring, &offspring_leaf_status)) < 0 ) {
-        raise_error(error);
+        raise_error(error, pcp_pmapi_error);
     } else {
         number_of_children = error;
         for(i = 0; i < number_of_children; i++) {
@@ -228,13 +228,32 @@ static VALUE rb_pmGetChildrenStatus(VALUE self, VALUE root_name) {
     return children_names_and_status;
 }
 
+static VALUE rb_pmNameID(VALUE self, VALUE rb_pmid) {
+    int error;
+    char *name_result;
+    VALUE result;
+
+    use_context(self);
+
+    if((error = pmNameID(NUM2UINT(rb_pmid), &name_result)) < 0) {
+        raise_error(error, pcp_pmapi_invalid_pmid_error);
+        return Qnil;
+    } else {
+        result = rb_tainted_str_new_cstr(name_result);
+        /* TODO: Do we need to free tainted strings? */
+        free(name_result);
+        return result;
+    }
+}
+
 
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
-    pcp_metric_source_failed = rb_define_class_under(pcp_module, "MetricSourceFailed", rb_eStandardError);
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
-    pcp_pmapi_namespace_load_error = rb_define_class_under(pcp_pmapi_class, "NamespaceLoadError", rb_eStandardError);
     pcp_pmapi_error = rb_define_class_under(pcp_pmapi_class, "Error", rb_eStandardError);
+    pcp_metric_source_failed = rb_define_class_under(pcp_module, "MetricSourceFailed", rb_eStandardError);
+    pcp_pmapi_namespace_load_error = rb_define_class_under(pcp_pmapi_class, "NamespaceLoadError", rb_eStandardError);
+    pcp_pmapi_invalid_pmid_error = rb_define_class_under(pcp_pmapi_class, "InvalidPMIDError", pcp_pmapi_error);
 
     rb_define_const(pcp_pmapi_class, "PM_SPACE_BYTE", INT2NUM(PM_SPACE_BYTE));
     rb_define_const(pcp_pmapi_class, "PM_SPACE_KBYTE", INT2NUM(PM_SPACE_KBYTE));
@@ -332,6 +351,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmLookupName", rb_pmLookupName, 1);
     rb_define_method(pcp_pmapi_class, "pmGetChildren", rb_pmGetChildren, 1);
     rb_define_method(pcp_pmapi_class, "pmGetChildrenStatus", rb_pmGetChildrenStatus, 1);
+    rb_define_method(pcp_pmapi_class, "pmNameID", rb_pmNameID, 1);
 
 }
 
