@@ -350,6 +350,27 @@ static VALUE rb_pmLookupInDomArchive(VALUE self, VALUE indom, VALUE name) {
     return pmLookupInDom_with_lookup_function(self, indom, name, pmLookupInDomArchive);
 }
 
+static VALUE pmNameInDom_with_lookup_function(VALUE self, VALUE indom, VALUE instance_id, int(*indom_lookup_function)(pmInDom, int, char **)) {
+    int error;
+    char *name;
+    VALUE result;
+
+    use_context(self);
+
+    if((error = indom_lookup_function(NUM2UINT(indom), NUM2INT(instance_id), &name)) < 0) {
+        raise_error(error, pcp_pmapi_error);
+        return Qnil;
+    }
+
+    result = rb_tainted_str_new_cstr(name);
+    free(name);
+
+    return result;
+}
+
+static VALUE rb_pmNameInDom(VALUE self, VALUE indom, VALUE instance_id) {
+    return pmNameInDom_with_lookup_function(self, indom, instance_id, pmNameInDom);
+}
 
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
@@ -461,6 +482,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmLookupDesc", rb_pmLookupDesc, 1);
     rb_define_method(pcp_pmapi_class, "pmLookupInDom", rb_pmLookupInDom, 2);
     rb_define_method(pcp_pmapi_class, "pmLookupInDomArchive", rb_pmLookupInDomArchive, 2);
+    rb_define_method(pcp_pmapi_class, "pmNameInDom", rb_pmNameInDom, 2);
 
 }
 

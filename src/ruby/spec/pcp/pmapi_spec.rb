@@ -232,6 +232,18 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmNameInDom' do
+      it 'should return the text name of an instance from an instance domain and and instance id' do
+        expect(pmapi.pmNameInDom(121634824, 0)).to eq "i-0"
+      end
+      it 'should raise an error for invalid instance domains' do
+        expect{pmapi.pmNameInDom(123, 1)}.to raise_error PCP::PMAPI::Error
+      end
+      it 'should raise an error for invalid instance ids' do
+        expect{pmapi.pmNameInDom(121634824, 123)}.to raise_error PCP::PMAPI::Error
+      end
+    end
+
 
   end
 
