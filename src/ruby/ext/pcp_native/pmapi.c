@@ -376,7 +376,7 @@ static VALUE rb_pmNameInDomArchive(VALUE self, VALUE indom, VALUE instance_id) {
     return pmNameInDom_with_lookup_function(self, indom, instance_id, pmNameInDomArchive);
 }
 
-static VALUE rb_pmGetInDom(VALUE self, VALUE indom) {
+static VALUE rb_pmGetInDom_with_lookup_function(VALUE self, VALUE indom, int(*indom_lookup_function)(pmInDom, int **, char ***)) {
     int error_or_number_of_instances, i;
     int *instance_ids;
     char **instance_names;
@@ -384,7 +384,7 @@ static VALUE rb_pmGetInDom(VALUE self, VALUE indom) {
 
     use_context(self);
 
-    if((error_or_number_of_instances = pmGetInDom(NUM2UINT(indom), &instance_ids, &instance_names)) < 0) {
+    if((error_or_number_of_instances = indom_lookup_function(NUM2UINT(indom), &instance_ids, &instance_names)) < 0) {
         raise_error(error_or_number_of_instances, pcp_pmapi_error);
         return Qnil;
     }
@@ -404,6 +404,10 @@ static VALUE rb_pmGetInDom(VALUE self, VALUE indom) {
     free(instance_names);
 
     return result;
+}
+
+static VALUE rb_pmGetInDom(VALUE self, VALUE indom) {
+    return rb_pmGetInDom_with_lookup_function(self, indom, pmGetInDom);
 }
 
 void Init_pcp_native() {
