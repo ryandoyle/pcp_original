@@ -83,7 +83,7 @@ static VALUE rb_pmNewContext(VALUE self, VALUE metric_source, VALUE metric_sourc
     return self;
 }
 
-static VALUE rb_pmGetContextHostName_r(VALUE self) {
+static VALUE rb_pmGetContextHostName(VALUE self) {
     char result_buffer[MAXHOSTNAMELEN];
 
     pmGetContextHostName_r(get_context(self), (char *)&result_buffer, MAXHOSTNAMELEN);
@@ -510,7 +510,7 @@ void Init_pcp_native() {
 
     rb_define_alloc_func(pcp_pmapi_class, allocate);
     rb_define_private_method(pcp_pmapi_class, "pmNewContext", rb_pmNewContext, 2);
-    rb_define_method(pcp_pmapi_class, "pmGetContextHostName_r", rb_pmGetContextHostName_r, 0);
+    rb_define_method(pcp_pmapi_class, "pmGetContextHostName", rb_pmGetContextHostName, 0);
     rb_define_method(pcp_pmapi_class, "pmGetPMNSLocation", rb_pmGetPMNSLocation, 0);
     rb_define_method(pcp_pmapi_class, "pmLoadNameSpace", rb_pmLoadNameSpace, 1);
     rb_define_method(pcp_pmapi_class, "pmUnloadNameSpace", rb_pmUnloadNameSpace, 0);

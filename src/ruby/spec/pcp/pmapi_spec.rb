@@ -107,11 +107,8 @@ describe PCP::PMAPI do
       end
     end
 
-    describe '#pmGetContextHostName_r' do
+    describe '#pmGetContextHostName' do
       it 'should return the hostname of the created context' do
-        expect(pmapi.pmGetContextHostName_r).to eq 'ryandesktop'
-      end
-      it 'should be have an alias from pmGetContextHostName' do
         expect(pmapi.pmGetContextHostName).to eq 'ryandesktop'
       end
     end
