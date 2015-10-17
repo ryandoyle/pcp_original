@@ -376,7 +376,7 @@ static VALUE rb_pmNameInDomArchive(VALUE self, VALUE indom, VALUE instance_id) {
     return pmNameInDom_with_lookup_function(self, indom, instance_id, pmNameInDomArchive);
 }
 
-static VALUE rb_pmGetInDom_with_lookup_function(VALUE self, VALUE indom, int(*indom_lookup_function)(pmInDom, int **, char ***)) {
+static VALUE pmGetInDom_with_lookup_function(VALUE self, VALUE indom, int(*indom_lookup_function)(pmInDom, int **, char ***)) {
     int error_or_number_of_instances, i;
     int *instance_ids;
     char **instance_names;
@@ -407,7 +407,11 @@ static VALUE rb_pmGetInDom_with_lookup_function(VALUE self, VALUE indom, int(*in
 }
 
 static VALUE rb_pmGetInDom(VALUE self, VALUE indom) {
-    return rb_pmGetInDom_with_lookup_function(self, indom, pmGetInDom);
+    return pmGetInDom_with_lookup_function(self, indom, pmGetInDom);
+}
+
+static VALUE rb_pmGetInDomArchive(VALUE self, VALUE indom) {
+    return pmGetInDom_with_lookup_function(self, indom, pmGetInDomArchive);
 }
 
 void Init_pcp_native() {
@@ -523,6 +527,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmNameInDom", rb_pmNameInDom, 2);
     rb_define_method(pcp_pmapi_class, "pmNameInDomArchive", rb_pmNameInDomArchive, 2);
     rb_define_method(pcp_pmapi_class, "pmGetInDom", rb_pmGetInDom, 1);
+    rb_define_method(pcp_pmapi_class, "pmGetInDomArchive", rb_pmGetInDomArchive, 1);
 
 }
 

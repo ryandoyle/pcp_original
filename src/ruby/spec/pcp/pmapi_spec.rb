@@ -260,6 +260,13 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmGetInDomArchive' do
+      it 'requires integration testing'
+      it 'raises an error if not used in an archive context' do
+        expect{pmapi.pmGetInDomArchive(123456)}.to raise_error PCP::PMAPI::Error
+      end
+    end
+
   end
 
 end
