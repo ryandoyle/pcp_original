@@ -414,6 +414,19 @@ static VALUE rb_pmGetInDomArchive(VALUE self, VALUE indom) {
     return pmGetInDom_with_lookup_function(self, indom, pmGetInDomArchive);
 }
 
+static VALUE rb_pmWhichContext(VALUE self) {
+    int error_or_context_number;
+
+    use_context(self);
+
+    if((error_or_context_number = pmWhichContext()) < 0) {
+        raise_error(error_or_context_number, pcp_pmapi_error);
+        return Qnil;
+    }
+
+    return INT2NUM(error_or_context_number);
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
@@ -528,6 +541,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmNameInDomArchive", rb_pmNameInDomArchive, 2);
     rb_define_method(pcp_pmapi_class, "pmGetInDom", rb_pmGetInDom, 1);
     rb_define_method(pcp_pmapi_class, "pmGetInDomArchive", rb_pmGetInDomArchive, 1);
+    rb_define_method(pcp_pmapi_class, "pmWhichContext", rb_pmWhichContext, 0);
 
 }
 

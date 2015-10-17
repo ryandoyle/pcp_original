@@ -264,6 +264,12 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmWhichContext' do
+      it 'returns the handle of the current context' do
+        expect(pmapi.pmWhichContext).to be_a_kind_of Integer
+      end
+    end
+
   end
 
 end
