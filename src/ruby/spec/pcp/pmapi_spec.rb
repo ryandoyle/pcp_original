@@ -244,6 +244,12 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmNameInDomArchive' do
+      it 'requires integration testing'
+      it 'raises an error if not used in an archive context' do
+        expect{pmapi.pmNameInDomArchive(121634824, 0)}.to raise_error PCP::PMAPI::Error
+      end
+    end
 
   end
 

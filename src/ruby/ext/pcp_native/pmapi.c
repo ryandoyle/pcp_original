@@ -372,6 +372,10 @@ static VALUE rb_pmNameInDom(VALUE self, VALUE indom, VALUE instance_id) {
     return pmNameInDom_with_lookup_function(self, indom, instance_id, pmNameInDom);
 }
 
+static VALUE rb_pmNameInDomArchive(VALUE self, VALUE indom, VALUE instance_id) {
+    return pmNameInDom_with_lookup_function(self, indom, instance_id, pmNameInDomArchive);
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
@@ -483,6 +487,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmLookupInDom", rb_pmLookupInDom, 2);
     rb_define_method(pcp_pmapi_class, "pmLookupInDomArchive", rb_pmLookupInDomArchive, 2);
     rb_define_method(pcp_pmapi_class, "pmNameInDom", rb_pmNameInDom, 2);
+    rb_define_method(pcp_pmapi_class, "pmNameInDomArchive", rb_pmNameInDomArchive, 2);
 
 }
 
