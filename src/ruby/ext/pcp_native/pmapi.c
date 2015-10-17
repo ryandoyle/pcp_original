@@ -24,7 +24,7 @@ VALUE pcp_pmapi_invalid_pmid_error = Qnil;
 
 //#ifdef DEBUG
 #include <pcp/impl.h>
-pmDebug = DBG_TRACE_CONTEXT && DBG_TRACE_PMNS;
+//pmDebug = DBG_TRACE_CONTEXT && DBG_TRACE_PMNS;
 //#endif
 
 typedef struct {
@@ -328,18 +328,28 @@ static VALUE rb_pmLookupDesc(VALUE self, VALUE pmid) {
 
 }
 
-static VALUE rb_pmLookupInDom(VALUE self, VALUE indom, VALUE name) {
+
+static VALUE pmLookupInDom_with_lookup_function(VALUE self, VALUE indom, VALUE name, int(*indom_lookup_function)(pmInDom, const char *)) {
     int error_or_result;
 
     use_context(self);
 
-    if((error_or_result = pmLookupInDom(NUM2UINT(indom), StringValueCStr(name))) < 0) {
+    if((error_or_result = indom_lookup_function(NUM2UINT(indom), StringValueCStr(name))) < 0) {
         raise_error(error_or_result, pcp_pmapi_error);
         return Qnil;
     }
 
     return INT2NUM(error_or_result);
 }
+
+static VALUE rb_pmLookupInDom(VALUE self, VALUE indom, VALUE name) {
+    return pmLookupInDom_with_lookup_function(self, indom, name, pmLookupInDom);
+}
+
+static VALUE rb_pmLookupInDomArchive(VALUE self, VALUE indom, VALUE name) {
+    return pmLookupInDom_with_lookup_function(self, indom, name, pmLookupInDomArchive);
+}
+
 
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
@@ -450,6 +460,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmTraversePMNS", rb_pmTraversePMNS, 1);
     rb_define_method(pcp_pmapi_class, "pmLookupDesc", rb_pmLookupDesc, 1);
     rb_define_method(pcp_pmapi_class, "pmLookupInDom", rb_pmLookupInDom, 2);
+    rb_define_method(pcp_pmapi_class, "pmLookupInDomArchive", rb_pmLookupInDomArchive, 2);
 
 }
 
