@@ -328,6 +328,19 @@ static VALUE rb_pmLookupDesc(VALUE self, VALUE pmid) {
 
 }
 
+static VALUE rb_pmLookupInDom(VALUE self, VALUE indom, VALUE name) {
+    int error_or_result;
+
+    use_context(self);
+
+    if((error_or_result = pmLookupInDom(NUM2UINT(indom), StringValueCStr(name))) < 0) {
+        raise_error(error_or_result, pcp_pmapi_error);
+        return Qnil;
+    }
+
+    return INT2NUM(error_or_result);
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
@@ -436,6 +449,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmNameAll", rb_pmNameAll, 1);
     rb_define_method(pcp_pmapi_class, "pmTraversePMNS", rb_pmTraversePMNS, 1);
     rb_define_method(pcp_pmapi_class, "pmLookupDesc", rb_pmLookupDesc, 1);
+    rb_define_method(pcp_pmapi_class, "pmLookupInDom", rb_pmLookupInDom, 2);
 
 }
 

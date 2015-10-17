@@ -215,6 +215,16 @@ describe PCP::PMAPI do
       end
     end
 
+    # sample.many.int == PMID: 121634896 == Instance domain 121634824
+    describe '#pmLookupInDom' do
+      it 'returns the internal instance identifier given an instance domain and the instance name' do
+        expect(pmapi.pmLookupInDom(121634824, "i-0")).to eq 0
+      end
+      it 'returns an error for unknown instance identifiers' do
+        expect{pmapi.pmLookupInDom(121634824, "doesntexist")}.to raise_error PCP::PMAPI::Error
+      end
+    end
+
 
   end
 
