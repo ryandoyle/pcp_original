@@ -284,6 +284,50 @@ static VALUE rb_pmTraversePMNS(VALUE self, VALUE name) {
     return Qnil;
 }
 
+static VALUE rb_create_symbol_from_str(const char *name) {
+    return ID2SYM(rb_intern(name));
+}
+
+static VALUE create_pmUnits(pmUnits units) {
+    VALUE pmUnitsHash = rb_hash_new();
+
+    rb_hash_aset(pmUnitsHash, rb_create_symbol_from_str("dimSpace"), INT2NUM(units.dimSpace));
+    rb_hash_aset(pmUnitsHash, rb_create_symbol_from_str("dimTime"), INT2NUM(units.dimTime));
+    rb_hash_aset(pmUnitsHash, rb_create_symbol_from_str("dimCount"), INT2NUM(units.dimCount));
+    rb_hash_aset(pmUnitsHash, rb_create_symbol_from_str("scaleSpace"), UINT2NUM(units.scaleSpace));
+    rb_hash_aset(pmUnitsHash, rb_create_symbol_from_str("scaleTime"), UINT2NUM(units.scaleTime));
+    rb_hash_aset(pmUnitsHash, rb_create_symbol_from_str("scaleCount"), INT2NUM(units.scaleCount));
+
+    return pmUnitsHash;
+}
+
+static VALUE create_pmDesc(pmDesc desc) {
+    VALUE pmDescHash = rb_hash_new();
+
+    rb_hash_aset(pmDescHash, rb_create_symbol_from_str("pmid"), UINT2NUM(desc.pmid));
+    rb_hash_aset(pmDescHash, rb_create_symbol_from_str("type"), INT2NUM(desc.type));
+    rb_hash_aset(pmDescHash, rb_create_symbol_from_str("indom"), UINT2NUM(desc.indom));
+    rb_hash_aset(pmDescHash, rb_create_symbol_from_str("sem"), INT2NUM(desc.sem));
+    rb_hash_aset(pmDescHash, rb_create_symbol_from_str("units"), create_pmUnits(desc.units));
+
+    return pmDescHash;
+}
+
+static VALUE rb_pmLookupDesc(VALUE self, VALUE pmid) {
+    int error;
+    pmDesc pmDesc;
+
+    use_context(self);
+
+    if((error = pmLookupDesc(NUM2UINT(pmid), &pmDesc)) < 0) {
+        raise_error(error, pcp_pmapi_error);
+        return Qnil;
+    }
+
+    return create_pmDesc(pmDesc);
+
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
@@ -391,6 +435,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmNameID", rb_pmNameID, 1);
     rb_define_method(pcp_pmapi_class, "pmNameAll", rb_pmNameAll, 1);
     rb_define_method(pcp_pmapi_class, "pmTraversePMNS", rb_pmTraversePMNS, 1);
+    rb_define_method(pcp_pmapi_class, "pmLookupDesc", rb_pmLookupDesc, 1);
 
 }
 
