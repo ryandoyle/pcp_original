@@ -251,6 +251,15 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmGetInDom' do
+      it 'returns a list of instance ids and names for an instance domain' do
+        expect(pmapi.pmGetInDom(121634824)).to eq [{0=>"i-0"}, {1=>"i-1"}, {2=>"i-2"}, {3=>"i-3"}, {4=>"i-4"}]
+      end
+      it 'raises an error for invalid instance domains' do
+        expect{pmapi.pmGetInDom(123456)}.to raise_error PCP::PMAPI::Error
+      end
+    end
+
   end
 
 end
