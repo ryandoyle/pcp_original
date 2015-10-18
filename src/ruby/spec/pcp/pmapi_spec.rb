@@ -288,6 +288,12 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmReconnectContext' do
+      it 'reconnects the context if it is disconnected' do
+        expect{pmapi.pmReconnectContext}.to_not raise_error
+      end
+    end
+
   end
 
 end

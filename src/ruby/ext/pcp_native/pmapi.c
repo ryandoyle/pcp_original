@@ -442,6 +442,16 @@ static VALUE rb_pmUseContext() {
     return Qnil;
 }
 
+static VALUE rb_pmReconnectContext(VALUE self) {
+    int error;
+
+    if((error = pmReconnectContext(get_context(self))) < 0) {
+        raise_error(error, pcp_pmapi_error);
+    }
+
+    return Qnil;
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
@@ -560,6 +570,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmDestroyContext", rb_pmDestroyContext, 0);
     rb_define_method(pcp_pmapi_class, "pmDupContext", rb_pmDupContext, 0);
     rb_define_method(pcp_pmapi_class, "pmUseContext", rb_pmUseContext, 0);
+    rb_define_method(pcp_pmapi_class, "pmReconnectContext", rb_pmReconnectContext, 0);
 
 }
 
