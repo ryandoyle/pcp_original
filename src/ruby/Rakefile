@@ -1,3 +1,20 @@
 require 'rake/extensiontask'
 spec = Gem::Specification.load('pcp.gemspec')
 Rake::ExtensionTask.new('pcp_native', spec)
+
+require 'rdoc/task'
+
+RDOC_FILES = FileList["README.rdoc", "ext/pcp_native/pmapi.c"]
+
+Rake::RDocTask.new do |rd|
+  rd.main = "README.rdoc"
+  rd.rdoc_dir = "doc/site/api"
+  rd.rdoc_files.include(RDOC_FILES)
+end
+
+Rake::RDocTask.new(:ri) do |rd|
+  rd.main = "README.rdoc"
+  rd.rdoc_dir = "doc/ri"
+  rd.options << "--ri-system"
+  rd.rdoc_files.include(RDOC_FILES)
+end

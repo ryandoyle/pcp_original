@@ -82,7 +82,11 @@ static VALUE rb_pmNewContext(VALUE self, VALUE metric_source, VALUE metric_sourc
 
     return self;
 }
-
+/* call-seq: pmapi.pmGetContextHostName
+ *
+ * Returns the hostname that the context is connected to
+ *
+ */
 static VALUE rb_pmGetContextHostName(VALUE self) {
     char result_buffer[MAXHOSTNAMELEN];
 
@@ -91,6 +95,15 @@ static VALUE rb_pmGetContextHostName(VALUE self) {
     return rb_tainted_str_new_cstr(result_buffer);
 }
 
+/* call-seq: pmapi.pmGetPMNSLocation => location
+ *
+ * Returns the location of the PMNS. Either +PCP::PMAPI::PMNS_LOCAL+,
+ * +PCP::PMAPI::PMNS_REMOTE+ or +PCP::PMAPI::PMNS_ARCHIVE+ depending
+ * how the context was created.
+ *
+ *     pmapi.pmGetPMNSLocation #=> PMNS_LOCAL
+ *
+ */
 static VALUE rb_pmGetPMNSLocation(VALUE self) {
     int pmns_location;
 
@@ -101,6 +114,12 @@ static VALUE rb_pmGetPMNSLocation(VALUE self) {
     return INT2NUM(pmns_location);
 }
 
+/* call-seq: pmapi.pmLoadNameSpace(filename)
+ *
+ * Load the namespace from a file on disk.
+ *
+ *     pmapi.pmLoadNameSpace('/path/to/namespace.pmns')
+ */
 static VALUE rb_pmLoadNameSpace(VALUE self, VALUE filename) {
     int error;
 

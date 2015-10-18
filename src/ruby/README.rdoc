@@ -1,0 +1,6 @@
+= PCP/Ruby Interface
+
+== Description
+
+This module allows Ruby programs to interact with Performance
+Co-Pilot
