@@ -270,6 +270,24 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmDestroyContext' do
+      it 'should raise a Not Implemented error' do
+        expect{pmapi.pmDestroyContext}.to raise_error NotImplementedError
+      end
+    end
+
+    describe '#pmDupContext' do
+      it 'should raise a Not Implemented error' do
+        expect{pmapi.pmDupContext}.to raise_error NotImplementedError
+      end
+    end
+
+    describe '#pmUseContext' do
+      it 'should raise a Not Implemented error' do
+        expect{pmapi.pmUseContext}.to raise_error NotImplementedError
+      end
+    end
+
   end
 
 end

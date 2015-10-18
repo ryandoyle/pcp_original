@@ -427,6 +427,21 @@ static VALUE rb_pmWhichContext(VALUE self) {
     return INT2NUM(error_or_context_number);
 }
 
+static VALUE rb_pmDestroyContext() {
+    rb_raise(rb_eNotImpError, "pmDestroyContext is controlled by object lifecycle");
+    return Qnil;
+}
+
+static VALUE rb_pmDupContext() {
+    rb_raise(rb_eNotImpError, "pmDupContext not supported");
+    return Qnil;
+}
+
+static VALUE rb_pmUseContext() {
+    rb_raise(rb_eNotImpError, "pmUseContext not supported");
+    return Qnil;
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
@@ -542,6 +557,9 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmGetInDom", rb_pmGetInDom, 1);
     rb_define_method(pcp_pmapi_class, "pmGetInDomArchive", rb_pmGetInDomArchive, 1);
     rb_define_method(pcp_pmapi_class, "pmWhichContext", rb_pmWhichContext, 0);
+    rb_define_method(pcp_pmapi_class, "pmDestroyContext", rb_pmDestroyContext, 0);
+    rb_define_method(pcp_pmapi_class, "pmDupContext", rb_pmDupContext, 0);
+    rb_define_method(pcp_pmapi_class, "pmUseContext", rb_pmUseContext, 0);
 
 }
 
