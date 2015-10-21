@@ -294,6 +294,26 @@ describe PCP::PMAPI do
       end
     end
 
+    describe '#pmDelProfile' do
+      # TODO: Test that we don't get back the instances that we delete
+      # EG:
+      # pmapi.pmDelProfile(121634824, [1])
+      # expect(pmapi.get_back_some_metrics_for_this_instance_domain_and_its_instances).to eq [{0=>"i-0"}, {2=>"i-2"}, {3=>"i-3"}, {4=>"i-4"}]
+      it 'deletes an instance from an instance domain'
+
+      # TODO: Check that passing in an empty list removes all instances
+      # EG:
+      # pmapi.pmDelProfile(121634824, [])
+      it 'deletes all instances from an instance domain'
+
+      # TODO: Check that passing is PM_INDOM_NULL removes all instances for all instance domains
+      # EG:
+      # pmapi.pmDelProfile(PCP::PMAPI::PM_INDOM_NULL, [])
+      it 'removes all instances from all domains'
+
+      it 'might raise an error for invalid instance domains'
+    end
+
   end
 
 end
