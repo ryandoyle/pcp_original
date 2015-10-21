@@ -49,7 +49,7 @@ static void use_context(VALUE self) {
     pmUseContext(get_context(self));
 }
 
-static void raise_error(int error_number) {
+static void raise_error_from_pmapi_error_code(int error_number) {
     char errmsg[PM_MAXERRMSGLEN];
     VALUE exception_to_raise;
 
@@ -77,7 +77,7 @@ static VALUE rb_pmNewContext(VALUE self, VALUE metric_source, VALUE metric_sourc
     }
 
     if ((pm_context = pmNewContext(pm_metric_source, pm_metric_source_argument)) < 0) {
-        raise_error(pm_context);
+        raise_error_from_pmapi_error_code(pm_context);
     }
 
     pmapi_context->pm_context = pm_context;
@@ -129,7 +129,7 @@ static VALUE rb_pmLoadNameSpace(VALUE self, VALUE filename) {
 
     error = pmLoadNameSpace(StringValuePtr(filename));
     if(error < 0 ) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
     }
 
     return Qnil;
@@ -173,7 +173,7 @@ static VALUE rb_pmLookupName(VALUE self, VALUE names) {
 
     error = pmLookupName(number_of_names, namelist, pmidlist);
     if(error < 0 ) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
     } else {
         /* Build up the array of hashes to return */
         for(i = 0; i < number_of_names; i++) {
@@ -202,7 +202,7 @@ static VALUE rb_pmGetChildren(VALUE self, VALUE root_name) {
     children_names = rb_ary_new();
 
     if((error = pmGetChildren(StringValueCStr(root_name), &offspring)) < 0 ) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
     } else {
         number_of_children = error;
         for(i = 0; i < number_of_children; i++) {
@@ -229,7 +229,7 @@ static VALUE rb_pmGetChildrenStatus(VALUE self, VALUE root_name) {
     children_names_and_status = rb_ary_new();
 
     if((error = pmGetChildrenStatus(StringValueCStr(root_name), &offspring, &offspring_leaf_status)) < 0 ) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
     } else {
         number_of_children = error;
         for(i = 0; i < number_of_children; i++) {
@@ -257,7 +257,7 @@ static VALUE rb_pmNameID(VALUE self, VALUE pmid) {
     use_context(self);
 
     if((error = pmNameID(NUM2UINT(pmid), &name_result)) < 0) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
         return Qnil;
     } else {
         result = rb_tainted_str_new_cstr(name_result);
@@ -275,7 +275,7 @@ static VALUE rb_pmNameAll(VALUE self, VALUE pmid) {
     use_context(self);
 
     if((error = pmNameAll(NUM2UINT(pmid), &name_result)) < 0) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
         return Qnil;
     } else {
         number_of_names = error;
@@ -299,7 +299,7 @@ static VALUE rb_pmTraversePMNS(VALUE self, VALUE name) {
     use_context(self);
 
     if((error = pmTraversePMNS(StringValueCStr(name), dometric)) < 0) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
     }
 
     return Qnil;
@@ -341,7 +341,7 @@ static VALUE rb_pmLookupDesc(VALUE self, VALUE pmid) {
     use_context(self);
 
     if((error = pmLookupDesc(NUM2UINT(pmid), &pmDesc)) < 0) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
         return Qnil;
     }
 
@@ -356,7 +356,7 @@ static VALUE pmLookupInDom_with_lookup_function(VALUE self, VALUE indom, VALUE n
     use_context(self);
 
     if((error_or_result = indom_lookup_function(NUM2UINT(indom), StringValueCStr(name))) < 0) {
-        raise_error(error_or_result);
+        raise_error_from_pmapi_error_code(error_or_result);
         return Qnil;
     }
 
@@ -379,7 +379,7 @@ static VALUE pmNameInDom_with_lookup_function(VALUE self, VALUE indom, VALUE ins
     use_context(self);
 
     if((error = indom_lookup_function(NUM2UINT(indom), NUM2INT(instance_id), &name)) < 0) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
         return Qnil;
     }
 
@@ -406,7 +406,7 @@ static VALUE pmGetInDom_with_lookup_function(VALUE self, VALUE indom, int(*indom
     use_context(self);
 
     if((error_or_number_of_instances = indom_lookup_function(NUM2UINT(indom), &instance_ids, &instance_names)) < 0) {
-        raise_error(error_or_number_of_instances);
+        raise_error_from_pmapi_error_code(error_or_number_of_instances);
         return Qnil;
     }
 
@@ -441,7 +441,7 @@ static VALUE rb_pmWhichContext(VALUE self) {
     use_context(self);
 
     if((error_or_context_number = pmWhichContext()) < 0) {
-        raise_error(error_or_context_number);
+        raise_error_from_pmapi_error_code(error_or_context_number);
         return Qnil;
     }
 
@@ -467,7 +467,7 @@ static VALUE rb_pmReconnectContext(VALUE self) {
     int error;
 
     if((error = pmReconnectContext(get_context(self))) < 0) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
     }
 
     return Qnil;
@@ -489,7 +489,7 @@ static VALUE rb_pmDelProfile(VALUE self, VALUE indom, VALUE instance_identifiers
     }
 
     if((error = pmDelProfile(NUM2UINT(indom), number_of_instance_identifiers, instlist)) < 0) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
     }
 
     if(instlist) {
@@ -515,7 +515,7 @@ static VALUE rb_pmAddProfile(VALUE self, VALUE indom, VALUE instance_identifiers
     }
 
     if((error = pmAddProfile(NUM2UINT(indom), number_of_instance_identifiers, instlist)) < 0) {
-        raise_error(error);
+        raise_error_from_pmapi_error_code(error);
     }
 
     if(instlist) {
