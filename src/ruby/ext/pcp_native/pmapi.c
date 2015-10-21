@@ -497,6 +497,32 @@ static VALUE rb_pmDelProfile(VALUE self, VALUE indom, VALUE instance_identifiers
     return Qnil;
 }
 
+static VALUE rb_pmAddProfile(VALUE self, VALUE indom, VALUE instance_identifiers) {
+    int error, number_of_instance_identifiers, i;
+    int *instlist = NULL;
+
+    use_context(self);
+
+    number_of_instance_identifiers = RARRAY_LENINT(instance_identifiers);
+
+    if(number_of_instance_identifiers > 0) {
+        instlist = malloc(sizeof(int *) * number_of_instance_identifiers);
+        for(i = 0; i < number_of_instance_identifiers; i++) {
+            instlist[i] = NUM2INT(rb_ary_entry(instance_identifiers, i));
+        }
+    }
+
+    if((error = pmAddProfile(NUM2UINT(indom), number_of_instance_identifiers, instlist)) < 0) {
+        raise_error(error, pcp_pmapi_error);
+    }
+
+    if(instlist) {
+        free(instlist);
+    }
+
+    return Qnil;
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
@@ -622,6 +648,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmUseContext", rb_pmUseContext, 0);
     rb_define_method(pcp_pmapi_class, "pmReconnectContext", rb_pmReconnectContext, 0);
     rb_define_method(pcp_pmapi_class, "pmDelProfile", rb_pmDelProfile, 2);
+    rb_define_method(pcp_pmapi_class, "pmAddProfile", rb_pmAddProfile, 2);
 
 }
 

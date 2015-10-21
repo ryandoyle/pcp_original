@@ -314,6 +314,32 @@ describe PCP::PMAPI do
       it 'might raise an error for invalid instance domains'
     end
 
+    describe '#pmAddProfile' do
+      # TODO: Test that we can add a single instance to an instance domain
+      # EG:
+      # pmapi.pmDelProfile(121634824, [])
+      # pmapi.pmAddProfile(121634824, [2])
+      # expect(pmapi.get_back_some_metrics_for_this_instance_domain_and_its_instances).to eq [{2=>"i-2"}]
+      it 'adds an instance back onto an instance domain'
+
+      # TODO: Test that we can add all instances for an instance domain
+      # EG:
+      # pmapi.pmDelProfile(121634824, [])
+      # expect(pmapi.get_back_some_metrics_for_this_instance_domain_and_its_instances).to eq []
+      # pmapi.pmAddProfile(121634824, [])
+      # expect(pmapi.get_back_some_metrics_for_this_instance_domain_and_its_instances).to eq [{0=>"i-0"}, {1=>"i-1"}, {2=>"i-2"}, {3=>"i-3"}, {4=>"i-4"}]
+      it 'adds all instances back onto an instance domain'
+
+      # TODO: Check that passing is PM_INDOM_NULL adds all instances for all domains
+      # EG:
+      # pmapi.pmDelProfile(PCP::PMAPI::PM_INDOM_NULL, [])
+      # pmapi.pmAddProfile(PCP::PMAPI::PM_INDOM_NULL, [])
+      # expect(pmapi.get_back_some_metrics_for_this_instance_domain_and_its_instances).to eq [{0=>"i-0"}, {1=>"i-1"}, {2=>"i-2"}, {3=>"i-3"}, {4=>"i-4"}]
+      it 'adds all instances from all domains'
+
+      it 'might raise an error for invalid instance domains'
+    end
+
   end
 
 end
