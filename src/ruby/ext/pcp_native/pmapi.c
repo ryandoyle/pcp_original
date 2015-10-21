@@ -18,9 +18,7 @@
 VALUE pcp_module = Qnil;
 VALUE pcp_pmapi_class = Qnil;
 VALUE pcp_metric_source_failed = Qnil;
-VALUE pcp_pmapi_namespace_load_error = Qnil;
 VALUE pcp_pmapi_error = Qnil;
-VALUE pcp_pmapi_invalid_pmid_error = Qnil;
 
 //#ifdef DEBUG
 #include <pcp/impl.h>
@@ -52,9 +50,19 @@ static void use_context(VALUE self) {
     pmUseContext(get_context(self));
 }
 
-static void raise_error(int error_number, VALUE error_type) {
+static void raise_error(int error_number) {
     char errmsg[PM_MAXERRMSGLEN];
-    rb_raise(error_type, (const char *)pmErrStr_r(error_number, (char *)&errmsg, sizeof(errmsg)));
+    VALUE exception_to_raise;
+
+    switch(error_number) {
+        case PM_ERR_GENERIC:
+            exception_to_raise = pcp_pmapi_error;
+            break;
+        default:
+            exception_to_raise = pcp_pmapi_error;
+    }
+
+    rb_raise(exception_to_raise, (const char *)pmErrStr_r(error_number, (char *)&errmsg, sizeof(errmsg)));
 }
 
 static VALUE rb_pmNewContext(VALUE self, VALUE metric_source, VALUE metric_source_argument) {
@@ -127,7 +135,7 @@ static VALUE rb_pmLoadNameSpace(VALUE self, VALUE filename) {
 
     error = pmLoadNameSpace(StringValuePtr(filename));
     if(error < 0 ) {
-        raise_error(error, pcp_pmapi_namespace_load_error);
+        raise_error(error);
     }
 
     return Qnil;
@@ -171,7 +179,7 @@ static VALUE rb_pmLookupName(VALUE self, VALUE names) {
 
     error = pmLookupName(number_of_names, namelist, pmidlist);
     if(error < 0 ) {
-        raise_error(error, pcp_pmapi_error);
+        raise_error(error);
     } else {
         /* Build up the array of hashes to return */
         for(i = 0; i < number_of_names; i++) {
@@ -200,7 +208,7 @@ static VALUE rb_pmGetChildren(VALUE self, VALUE root_name) {
     children_names = rb_ary_new();
 
     if((error = pmGetChildren(StringValueCStr(root_name), &offspring)) < 0 ) {
-        raise_error(error, pcp_pmapi_error);
+        raise_error(error);
     } else {
         number_of_children = error;
         for(i = 0; i < number_of_children; i++) {
@@ -227,7 +235,7 @@ static VALUE rb_pmGetChildrenStatus(VALUE self, VALUE root_name) {
     children_names_and_status = rb_ary_new();
 
     if((error = pmGetChildrenStatus(StringValueCStr(root_name), &offspring, &offspring_leaf_status)) < 0 ) {
-        raise_error(error, pcp_pmapi_error);
+        raise_error(error);
     } else {
         number_of_children = error;
         for(i = 0; i < number_of_children; i++) {
@@ -255,7 +263,7 @@ static VALUE rb_pmNameID(VALUE self, VALUE pmid) {
     use_context(self);
 
     if((error = pmNameID(NUM2UINT(pmid), &name_result)) < 0) {
-        raise_error(error, pcp_pmapi_invalid_pmid_error);
+        raise_error(error);
         return Qnil;
     } else {
         result = rb_tainted_str_new_cstr(name_result);
@@ -273,7 +281,7 @@ static VALUE rb_pmNameAll(VALUE self, VALUE pmid) {
     use_context(self);
 
     if((error = pmNameAll(NUM2UINT(pmid), &name_result)) < 0) {
-        raise_error(error, pcp_pmapi_invalid_pmid_error);
+        raise_error(error);
         return Qnil;
     } else {
         number_of_names = error;
@@ -297,7 +305,7 @@ static VALUE rb_pmTraversePMNS(VALUE self, VALUE name) {
     use_context(self);
 
     if((error = pmTraversePMNS(StringValueCStr(name), dometric)) < 0) {
-        raise_error(error, pcp_pmapi_error);
+        raise_error(error);
     }
 
     return Qnil;
@@ -339,7 +347,7 @@ static VALUE rb_pmLookupDesc(VALUE self, VALUE pmid) {
     use_context(self);
 
     if((error = pmLookupDesc(NUM2UINT(pmid), &pmDesc)) < 0) {
-        raise_error(error, pcp_pmapi_error);
+        raise_error(error);
         return Qnil;
     }
 
@@ -354,7 +362,7 @@ static VALUE pmLookupInDom_with_lookup_function(VALUE self, VALUE indom, VALUE n
     use_context(self);
 
     if((error_or_result = indom_lookup_function(NUM2UINT(indom), StringValueCStr(name))) < 0) {
-        raise_error(error_or_result, pcp_pmapi_error);
+        raise_error(error_or_result);
         return Qnil;
     }
 
@@ -377,7 +385,7 @@ static VALUE pmNameInDom_with_lookup_function(VALUE self, VALUE indom, VALUE ins
     use_context(self);
 
     if((error = indom_lookup_function(NUM2UINT(indom), NUM2INT(instance_id), &name)) < 0) {
-        raise_error(error, pcp_pmapi_error);
+        raise_error(error);
         return Qnil;
     }
 
@@ -404,7 +412,7 @@ static VALUE pmGetInDom_with_lookup_function(VALUE self, VALUE indom, int(*indom
     use_context(self);
 
     if((error_or_number_of_instances = indom_lookup_function(NUM2UINT(indom), &instance_ids, &instance_names)) < 0) {
-        raise_error(error_or_number_of_instances, pcp_pmapi_error);
+        raise_error(error_or_number_of_instances);
         return Qnil;
     }
 
@@ -439,7 +447,7 @@ static VALUE rb_pmWhichContext(VALUE self) {
     use_context(self);
 
     if((error_or_context_number = pmWhichContext()) < 0) {
-        raise_error(error_or_context_number, pcp_pmapi_error);
+        raise_error(error_or_context_number);
         return Qnil;
     }
 
@@ -465,7 +473,7 @@ static VALUE rb_pmReconnectContext(VALUE self) {
     int error;
 
     if((error = pmReconnectContext(get_context(self))) < 0) {
-        raise_error(error, pcp_pmapi_error);
+        raise_error(error);
     }
 
     return Qnil;
@@ -487,7 +495,7 @@ static VALUE rb_pmDelProfile(VALUE self, VALUE indom, VALUE instance_identifiers
     }
 
     if((error = pmDelProfile(NUM2UINT(indom), number_of_instance_identifiers, instlist)) < 0) {
-        raise_error(error, pcp_pmapi_error);
+        raise_error(error);
     }
 
     if(instlist) {
@@ -513,7 +521,7 @@ static VALUE rb_pmAddProfile(VALUE self, VALUE indom, VALUE instance_identifiers
     }
 
     if((error = pmAddProfile(NUM2UINT(indom), number_of_instance_identifiers, instlist)) < 0) {
-        raise_error(error, pcp_pmapi_error);
+        raise_error(error);
     }
 
     if(instlist) {
@@ -528,8 +536,6 @@ void Init_pcp_native() {
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
     pcp_pmapi_error = rb_define_class_under(pcp_pmapi_class, "Error", rb_eStandardError);
     pcp_metric_source_failed = rb_define_class_under(pcp_module, "MetricSourceFailed", rb_eStandardError);
-    pcp_pmapi_namespace_load_error = rb_define_class_under(pcp_pmapi_class, "NamespaceLoadError", rb_eStandardError);
-    pcp_pmapi_invalid_pmid_error = rb_define_class_under(pcp_pmapi_class, "InvalidPMIDError", pcp_pmapi_error);
 
     rb_define_const(pcp_pmapi_class, "PM_SPACE_BYTE", INT2NUM(PM_SPACE_BYTE));
     rb_define_const(pcp_pmapi_class, "PM_SPACE_KBYTE", INT2NUM(PM_SPACE_KBYTE));

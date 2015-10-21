@@ -121,7 +121,7 @@ describe PCP::PMAPI do
 
     describe '#pmLoadNameSpace' do
       it 'should raise an error for non-existent files' do
-        expect{pmapi.pmLoadNameSpace('some-namespace-that-doesnt-exist.txt')}.to raise_error PCP::PMAPI::NamespaceLoadError
+        expect{pmapi.pmLoadNameSpace('some-namespace-that-doesnt-exist.txt')}.to raise_error PCP::PMAPI::Error
       end
     end
 
@@ -181,7 +181,7 @@ describe PCP::PMAPI do
         expect(pmapi.pmNameID(251658264)).to eq 'disk.all.read'
       end
       it 'raises an error for invalid PMIDs' do
-        expect{pmapi.pmNameID(123456)}.to raise_error PCP::PMAPI::InvalidPMIDError
+        expect{pmapi.pmNameID(123456)}.to raise_error PCP::PMAPI::Error
       end
     end
 
@@ -190,7 +190,7 @@ describe PCP::PMAPI do
         expect(pmapi.pmNameAll(121634817)).to eq ["sample.dupnames.pid_daemon", "sample.dupnames.daemon_pid", "sample.daemon_pid"]
       end
       it 'raises an error for invalid PMIDs' do
-        expect{pmapi.pmNameAll(123456)}.to raise_error PCP::PMAPI::InvalidPMIDError
+        expect{pmapi.pmNameAll(123456)}.to raise_error PCP::PMAPI::Error
       end
     end
 
