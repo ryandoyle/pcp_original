@@ -17,7 +17,6 @@
 
 VALUE pcp_module = Qnil;
 VALUE pcp_pmapi_class = Qnil;
-VALUE pcp_metric_source_failed = Qnil;
 VALUE pcp_pmapi_error = Qnil;
 
 //#ifdef DEBUG
@@ -78,12 +77,7 @@ static VALUE rb_pmNewContext(VALUE self, VALUE metric_source, VALUE metric_sourc
     }
 
     if ((pm_context = pmNewContext(pm_metric_source, pm_metric_source_argument)) < 0) {
-        if (pm_metric_source == PM_CONTEXT_HOST)
-            rb_raise(pcp_metric_source_failed, "Cannot connect to PMCD on host %s", pm_metric_source_argument);
-        else if (pm_metric_source == PM_CONTEXT_LOCAL)
-            rb_raise(pcp_metric_source_failed, "Cannot make standalone connection on localhost");
-        else
-            rb_raise(pcp_metric_source_failed, "Cannot open archive %s", pm_metric_source_argument);
+        raise_error(pm_context);
     }
 
     pmapi_context->pm_context = pm_context;
@@ -535,7 +529,6 @@ void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
     pcp_pmapi_error = rb_define_class_under(pcp_pmapi_class, "Error", rb_eStandardError);
-    pcp_metric_source_failed = rb_define_class_under(pcp_module, "MetricSourceFailed", rb_eStandardError);
 
     rb_define_const(pcp_pmapi_class, "PM_SPACE_BYTE", INT2NUM(PM_SPACE_BYTE));
     rb_define_const(pcp_pmapi_class, "PM_SPACE_KBYTE", INT2NUM(PM_SPACE_KBYTE));
