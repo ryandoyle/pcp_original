@@ -17,7 +17,118 @@
 
 VALUE pcp_module = Qnil;
 VALUE pcp_pmapi_class = Qnil;
+
+/* Error classes */
 VALUE pcp_pmapi_error = Qnil;
+VALUE pcp_pmapi_pmns_error = Qnil;
+VALUE pcp_pmapi_no_pmns_error = Qnil;
+VALUE pcp_pmapi_dup_pmns_error = Qnil;
+VALUE pcp_pmapi_text_error = Qnil;
+VALUE pcp_pmapi_app_version_error = Qnil;
+VALUE pcp_pmapi_value_error = Qnil;
+VALUE pcp_pmapi_timeout_error = Qnil;
+VALUE pcp_pmapi_no_data_error = Qnil;
+VALUE pcp_pmapi_reset_error = Qnil;
+VALUE pcp_pmapi_name_error = Qnil;
+VALUE pcp_pmapi_pmid_error = Qnil;
+VALUE pcp_pmapi_indom_error = Qnil;
+VALUE pcp_pmapi_inst_error = Qnil;
+VALUE pcp_pmapi_unit_error = Qnil;
+VALUE pcp_pmapi_conv_error = Qnil;
+VALUE pcp_pmapi_trunc_error = Qnil;
+VALUE pcp_pmapi_sign_error = Qnil;
+VALUE pcp_pmapi_profile_error = Qnil;
+VALUE pcp_pmapi_ipc_error = Qnil;
+VALUE pcp_pmapi_eof_error = Qnil;
+VALUE pcp_pmapi_not_host_error = Qnil;
+VALUE pcp_pmapi_eol_error = Qnil;
+VALUE pcp_pmapi_mode_error = Qnil;
+VALUE pcp_pmapi_label_error = Qnil;
+VALUE pcp_pmapi_log_rec_error = Qnil;
+VALUE pcp_pmapi_not_archive_error = Qnil;
+VALUE pcp_pmapi_log_file_error = Qnil;
+VALUE pcp_pmapi_no_context_error = Qnil;
+VALUE pcp_pmapi_profile_spec_error = Qnil;
+VALUE pcp_pmapi_pmid_log_error = Qnil;
+VALUE pcp_pmapi_indom_log_error = Qnil;
+VALUE pcp_pmapi_inst_log_error = Qnil;
+VALUE pcp_pmapi_no_profile_error = Qnil;
+VALUE pcp_pmapi_no_agent_error = Qnil;
+VALUE pcp_pmapi_permission_error = Qnil;
+VALUE pcp_pmapi_connlimit_error = Qnil;
+VALUE pcp_pmapi_again_error = Qnil;
+VALUE pcp_pmapi_is_conn_error = Qnil;
+VALUE pcp_pmapi_not_conn_error = Qnil;
+VALUE pcp_pmapi_need_port_error = Qnil;
+VALUE pcp_pmapi_non_leaf_error = Qnil;
+VALUE pcp_pmapi_type_error = Qnil;
+VALUE pcp_pmapi_thread_error = Qnil;
+VALUE pcp_pmapi_no_container_error = Qnil;
+VALUE pcp_pmapi_bad_store_error = Qnil;
+VALUE pcp_pmapi_too_small_error = Qnil;
+VALUE pcp_pmapi_too_big_error = Qnil;
+VALUE pcp_pmapi_fault_error = Qnil;
+VALUE pcp_pmapi_pmda_ready_error = Qnil;
+VALUE pcp_pmapi_pmda_not_ready_error = Qnil;
+VALUE pcp_pmapi_nyi_error = Qnil;
+
+static const struct pmapi_to_ruby_exception {
+    int pmapi_error;
+    VALUE *ruby_exception;
+} pmapi_to_ruby_exception_map[] = {
+    {PM_ERR_GENERIC, &pcp_pmapi_error},
+    {PM_ERR_PMNS, &pcp_pmapi_pmns_error},
+    {PM_ERR_NOPMNS, &pcp_pmapi_no_pmns_error},
+    {PM_ERR_DUPPMNS, &pcp_pmapi_dup_pmns_error},
+    {PM_ERR_TEXT, &pcp_pmapi_text_error},
+    {PM_ERR_APPVERSION, &pcp_pmapi_app_version_error},
+    {PM_ERR_VALUE, &pcp_pmapi_value_error},
+    {PM_ERR_TIMEOUT, &pcp_pmapi_timeout_error},
+    {PM_ERR_NODATA, &pcp_pmapi_no_data_error},
+    {PM_ERR_RESET, &pcp_pmapi_reset_error},
+    {PM_ERR_NAME, &pcp_pmapi_name_error},
+    {PM_ERR_PMID, &pcp_pmapi_pmid_error},
+    {PM_ERR_INDOM, &pcp_pmapi_indom_error},
+    {PM_ERR_INST, &pcp_pmapi_inst_error},
+    {PM_ERR_UNIT, &pcp_pmapi_unit_error},
+    {PM_ERR_CONV, &pcp_pmapi_conv_error},
+    {PM_ERR_TRUNC, &pcp_pmapi_trunc_error},
+    {PM_ERR_SIGN, &pcp_pmapi_sign_error},
+    {PM_ERR_PROFILE, &pcp_pmapi_profile_error},
+    {PM_ERR_IPC, &pcp_pmapi_ipc_error},
+    {PM_ERR_EOF, &pcp_pmapi_eof_error},
+    {PM_ERR_NOTHOST, &pcp_pmapi_not_host_error},
+    {PM_ERR_EOL, &pcp_pmapi_eol_error},
+    {PM_ERR_MODE, &pcp_pmapi_mode_error},
+    {PM_ERR_LABEL, &pcp_pmapi_label_error},
+    {PM_ERR_LOGREC, &pcp_pmapi_log_rec_error},
+    {PM_ERR_NOTARCHIVE, &pcp_pmapi_not_archive_error},
+    {PM_ERR_LOGFILE, &pcp_pmapi_log_file_error},
+    {PM_ERR_NOCONTEXT, &pcp_pmapi_no_context_error},
+    {PM_ERR_PROFILESPEC, &pcp_pmapi_profile_spec_error},
+    {PM_ERR_PMID_LOG, &pcp_pmapi_pmid_log_error},
+    {PM_ERR_INDOM_LOG, &pcp_pmapi_indom_log_error},
+    {PM_ERR_INST_LOG, &pcp_pmapi_inst_log_error},
+    {PM_ERR_NOPROFILE, &pcp_pmapi_no_profile_error},
+    {PM_ERR_NOAGENT, &pcp_pmapi_no_agent_error},
+    {PM_ERR_PERMISSION, &pcp_pmapi_permission_error},
+    {PM_ERR_CONNLIMIT, &pcp_pmapi_connlimit_error},
+    {PM_ERR_AGAIN, &pcp_pmapi_again_error},
+    {PM_ERR_ISCONN, &pcp_pmapi_is_conn_error},
+    {PM_ERR_NOTCONN, &pcp_pmapi_not_conn_error},
+    {PM_ERR_NEEDPORT, &pcp_pmapi_need_port_error},
+    {PM_ERR_NONLEAF, &pcp_pmapi_non_leaf_error},
+    {PM_ERR_TYPE, &pcp_pmapi_type_error},
+    {PM_ERR_THREAD, &pcp_pmapi_thread_error},
+    {PM_ERR_NOCONTAINER, &pcp_pmapi_no_container_error},
+    {PM_ERR_BADSTORE, &pcp_pmapi_bad_store_error},
+    {PM_ERR_TOOSMALL, &pcp_pmapi_too_small_error},
+    {PM_ERR_TOOBIG, &pcp_pmapi_too_big_error},
+    {PM_ERR_FAULT, &pcp_pmapi_fault_error},
+    {PM_ERR_PMDAREADY, &pcp_pmapi_pmda_ready_error},
+    {PM_ERR_PMDANOTREADY, &pcp_pmapi_pmda_not_ready_error},
+    {PM_ERR_NYI, &pcp_pmapi_nyi_error},
+};
 
 //#ifdef DEBUG
 #include <pcp/impl.h>
@@ -49,17 +160,24 @@ static void use_context(VALUE self) {
     pmUseContext(get_context(self));
 }
 
+static VALUE get_exception_from_pmapi_error_code(int error_code) {
+    int i, number_of_pmapi_to_ruby_errors;
+    number_of_pmapi_to_ruby_errors = sizeof(pmapi_to_ruby_exception_map) / sizeof(struct pmapi_to_ruby_exception);
+
+    for(i=0; i < number_of_pmapi_to_ruby_errors; i++) {
+        if(pmapi_to_ruby_exception_map[i].pmapi_error == error_code) {
+            return *pmapi_to_ruby_exception_map[i].ruby_exception;
+        }
+    }
+    /* Default to a generic error */
+    return pcp_pmapi_error;
+}
+
 static void raise_error_from_pmapi_error_code(int error_number) {
     char errmsg[PM_MAXERRMSGLEN];
     VALUE exception_to_raise;
 
-    switch(error_number) {
-        case PM_ERR_GENERIC:
-            exception_to_raise = pcp_pmapi_error;
-            break;
-        default:
-            exception_to_raise = pcp_pmapi_error;
-    }
+    exception_to_raise = get_exception_from_pmapi_error_code(error_number);
 
     rb_raise(exception_to_raise, (const char *)pmErrStr_r(error_number, (char *)&errmsg, sizeof(errmsg)));
 }
@@ -528,7 +646,59 @@ static VALUE rb_pmAddProfile(VALUE self, VALUE indom, VALUE instance_identifiers
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
+    /* Exceptions */
     pcp_pmapi_error = rb_define_class_under(pcp_pmapi_class, "Error", rb_eStandardError);
+    pcp_pmapi_pmns_error = rb_define_class_under(pcp_pmapi_class, "PMNSError", pcp_pmapi_error);
+    pcp_pmapi_no_pmns_error = rb_define_class_under(pcp_pmapi_class, "NoPMNSError", pcp_pmapi_error);
+    pcp_pmapi_dup_pmns_error = rb_define_class_under(pcp_pmapi_class, "DupPMNSError", pcp_pmapi_error);
+    pcp_pmapi_text_error = rb_define_class_under(pcp_pmapi_class, "TextError", pcp_pmapi_error);
+    pcp_pmapi_app_version_error = rb_define_class_under(pcp_pmapi_class, "AppVersionError", pcp_pmapi_error);
+    pcp_pmapi_value_error = rb_define_class_under(pcp_pmapi_class, "ValueError", pcp_pmapi_error);
+    pcp_pmapi_timeout_error = rb_define_class_under(pcp_pmapi_class, "TimeoutError", pcp_pmapi_error);
+    pcp_pmapi_no_data_error = rb_define_class_under(pcp_pmapi_class, "NoDataError", pcp_pmapi_error);
+    pcp_pmapi_reset_error = rb_define_class_under(pcp_pmapi_class, "ResetError", pcp_pmapi_error);
+    pcp_pmapi_name_error = rb_define_class_under(pcp_pmapi_class, "NameError", pcp_pmapi_error);
+    pcp_pmapi_pmid_error = rb_define_class_under(pcp_pmapi_class, "PMIDError", pcp_pmapi_error);
+    pcp_pmapi_indom_error = rb_define_class_under(pcp_pmapi_class, "InDomError", pcp_pmapi_error);
+    pcp_pmapi_inst_error = rb_define_class_under(pcp_pmapi_class, "InstError", pcp_pmapi_error);
+    pcp_pmapi_unit_error = rb_define_class_under(pcp_pmapi_class, "UnitError", pcp_pmapi_error);
+    pcp_pmapi_conv_error = rb_define_class_under(pcp_pmapi_class, "ConvError", pcp_pmapi_error);
+    pcp_pmapi_trunc_error = rb_define_class_under(pcp_pmapi_class, "TruncError", pcp_pmapi_error);
+    pcp_pmapi_sign_error = rb_define_class_under(pcp_pmapi_class, "SignError", pcp_pmapi_error);
+    pcp_pmapi_profile_error = rb_define_class_under(pcp_pmapi_class, "ProfileError", pcp_pmapi_error);
+    pcp_pmapi_ipc_error = rb_define_class_under(pcp_pmapi_class, "IPCError", pcp_pmapi_error);
+    pcp_pmapi_eof_error = rb_define_class_under(pcp_pmapi_class, "EOFError", pcp_pmapi_error);
+    pcp_pmapi_not_host_error = rb_define_class_under(pcp_pmapi_class, "NotHostError", pcp_pmapi_error);
+    pcp_pmapi_eol_error = rb_define_class_under(pcp_pmapi_class, "EOLError", pcp_pmapi_error);
+    pcp_pmapi_mode_error = rb_define_class_under(pcp_pmapi_class, "ModeError", pcp_pmapi_error);
+    pcp_pmapi_label_error = rb_define_class_under(pcp_pmapi_class, "LabelError", pcp_pmapi_error);
+    pcp_pmapi_log_rec_error = rb_define_class_under(pcp_pmapi_class, "LogRecError", pcp_pmapi_error);
+    pcp_pmapi_not_archive_error = rb_define_class_under(pcp_pmapi_class, "NotArchiveError", pcp_pmapi_error);
+    pcp_pmapi_log_file_error = rb_define_class_under(pcp_pmapi_class, "LogFileError", pcp_pmapi_error);
+    pcp_pmapi_no_context_error = rb_define_class_under(pcp_pmapi_class, "NoContextError", pcp_pmapi_error);
+    pcp_pmapi_profile_spec_error = rb_define_class_under(pcp_pmapi_class, "ProfileSpecError", pcp_pmapi_error);
+    pcp_pmapi_pmid_log_error = rb_define_class_under(pcp_pmapi_class, "PMIDLogError", pcp_pmapi_error);
+    pcp_pmapi_indom_log_error = rb_define_class_under(pcp_pmapi_class, "InDomLogError", pcp_pmapi_error);
+    pcp_pmapi_inst_log_error = rb_define_class_under(pcp_pmapi_class, "InstLogError", pcp_pmapi_error);
+    pcp_pmapi_no_profile_error = rb_define_class_under(pcp_pmapi_class, "NoProfileError", pcp_pmapi_error);
+    pcp_pmapi_no_agent_error = rb_define_class_under(pcp_pmapi_class, "NoAgentError", pcp_pmapi_error);
+    pcp_pmapi_permission_error = rb_define_class_under(pcp_pmapi_class, "PermissionError", pcp_pmapi_error);
+    pcp_pmapi_connlimit_error = rb_define_class_under(pcp_pmapi_class, "ConnLimitError", pcp_pmapi_error);
+    pcp_pmapi_again_error = rb_define_class_under(pcp_pmapi_class, "AgainError", pcp_pmapi_error);
+    pcp_pmapi_is_conn_error = rb_define_class_under(pcp_pmapi_class, "IsConnError", pcp_pmapi_error);
+    pcp_pmapi_not_conn_error = rb_define_class_under(pcp_pmapi_class, "NotConnError", pcp_pmapi_error);
+    pcp_pmapi_need_port_error = rb_define_class_under(pcp_pmapi_class, "NeedPortError", pcp_pmapi_error);
+    pcp_pmapi_non_leaf_error = rb_define_class_under(pcp_pmapi_class, "NonLeafError", pcp_pmapi_error);
+    pcp_pmapi_type_error = rb_define_class_under(pcp_pmapi_class, "TypeError", pcp_pmapi_error);
+    pcp_pmapi_thread_error = rb_define_class_under(pcp_pmapi_class, "ThreadError", pcp_pmapi_error);
+    pcp_pmapi_no_container_error = rb_define_class_under(pcp_pmapi_class, "NoContainerError", pcp_pmapi_error);
+    pcp_pmapi_bad_store_error = rb_define_class_under(pcp_pmapi_class, "BadStoreError", pcp_pmapi_error);
+    pcp_pmapi_too_small_error = rb_define_class_under(pcp_pmapi_class, "TooSmallError", pcp_pmapi_error);
+    pcp_pmapi_too_big_error = rb_define_class_under(pcp_pmapi_class, "TooBigError", pcp_pmapi_error);
+    pcp_pmapi_fault_error = rb_define_class_under(pcp_pmapi_class, "FaultError", pcp_pmapi_error);
+    pcp_pmapi_pmda_ready_error = rb_define_class_under(pcp_pmapi_class, "PMDAReadyError", pcp_pmapi_error);
+    pcp_pmapi_pmda_not_ready_error = rb_define_class_under(pcp_pmapi_class, "PMDANotReadyError", pcp_pmapi_error);
+    pcp_pmapi_nyi_error = rb_define_class_under(pcp_pmapi_class, "NYIError", pcp_pmapi_error);
 
     rb_define_const(pcp_pmapi_class, "PM_SPACE_BYTE", INT2NUM(PM_SPACE_BYTE));
     rb_define_const(pcp_pmapi_class, "PM_SPACE_KBYTE", INT2NUM(PM_SPACE_KBYTE));

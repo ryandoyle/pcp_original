@@ -145,7 +145,7 @@ describe PCP::PMAPI do
         expect(pmapi.pmLookupName(['disk.all.read', 'disk.all.write'])).to eq [{"disk.all.read"=>251658264}, {"disk.all.write"=>251658265}]
       end
       it 'should raise an error for unknown names' do
-        expect{pmapi.pmLookupName(['something.that.doesnt.exist'])}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmLookupName(['something.that.doesnt.exist'])}.to raise_error PCP::PMAPI::NameError
       end
     end
 
@@ -154,7 +154,7 @@ describe PCP::PMAPI do
         expect(pmapi.pmGetChildren('swap')).to eq ["pagesin", "pagesout", "in", "out", "free", "length", "used"]
       end
       it 'should raise an error for invalid metrics' do
-        expect{pmapi.pmGetChildren('invalid.metric.name')}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmGetChildren('invalid.metric.name')}.to raise_error PCP::PMAPI::NameError
       end
       it 'should return an empty list for metrics that are leaf nodes' do
         expect(pmapi.pmGetChildren('swap.used')).to eq []
@@ -172,7 +172,7 @@ describe PCP::PMAPI do
         expect(pmapi.pmGetChildrenStatus('swap.used')).to eq []
       end
       it 'should raise an error for invalid metrics' do
-        expect{pmapi.pmGetChildrenStatus('invalid.metric.name')}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmGetChildrenStatus('invalid.metric.name')}.to raise_error PCP::PMAPI::NameError
       end
     end
 
@@ -181,7 +181,7 @@ describe PCP::PMAPI do
         expect(pmapi.pmNameID(251658264)).to eq 'disk.all.read'
       end
       it 'raises an error for invalid PMIDs' do
-        expect{pmapi.pmNameID(123456)}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmNameID(123456)}.to raise_error PCP::PMAPI::NoAgentError
       end
     end
 
@@ -190,7 +190,7 @@ describe PCP::PMAPI do
         expect(pmapi.pmNameAll(121634817)).to eq ["sample.dupnames.pid_daemon", "sample.dupnames.daemon_pid", "sample.daemon_pid"]
       end
       it 'raises an error for invalid PMIDs' do
-        expect{pmapi.pmNameAll(123456)}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmNameAll(123456)}.to raise_error PCP::PMAPI::NoAgentError
       end
     end
 
@@ -199,7 +199,7 @@ describe PCP::PMAPI do
         expect { |b| pmapi.pmTraversePMNS('swap', &b) }.to yield_successive_args("swap.pagesin", "swap.pagesout", "swap.in", "swap.out", "swap.free", "swap.length", "swap.used")
       end
       it 'raises an error for invalid metric IDs' do
-        expect{ pmapi.pmTraversePMNS('some.invalid.name') }.to raise_error PCP::PMAPI::Error
+        expect{ pmapi.pmTraversePMNS('some.invalid.name') }.to raise_error PCP::PMAPI::NameError
       end
     end
 
@@ -208,7 +208,7 @@ describe PCP::PMAPI do
         expect(pmapi.pmLookupDesc(251658264)).to eq :pmid=>251658264, :type=>3, :indom=>4294967295, :sem=>1, :units=>{:dimSpace=>0, :dimTime=>0, :dimCount=>1, :scaleSpace=>0, :scaleTime=>0, :scaleCount=>0}
       end
       it 'raises an error for invalid metrics IDs' do
-        expect{pmapi.pmLookupDesc(123456)}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmLookupDesc(123456)}.to raise_error PCP::PMAPI::PMIDError
       end
     end
 
@@ -218,14 +218,14 @@ describe PCP::PMAPI do
         expect(pmapi.pmLookupInDom(121634824, "i-0")).to eq 0
       end
       it 'returns an error for unknown instance identifiers' do
-        expect{pmapi.pmLookupInDom(121634824, "doesntexist")}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmLookupInDom(121634824, "doesntexist")}.to raise_error PCP::PMAPI::InstError
       end
     end
 
     describe '#pmLookupInDomArchive' do
       it 'requires integration testing'
       it 'raises an error if not used in an archive context' do
-        expect{pmapi.pmLookupInDomArchive(121634824, "i-0")}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmLookupInDomArchive(121634824, "i-0")}.to raise_error PCP::PMAPI::NotArchiveError
       end
     end
 
@@ -234,17 +234,17 @@ describe PCP::PMAPI do
         expect(pmapi.pmNameInDom(121634824, 0)).to eq "i-0"
       end
       it 'should raise an error for invalid instance domains' do
-        expect{pmapi.pmNameInDom(123, 1)}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmNameInDom(123, 1)}.to raise_error PCP::PMAPI::InDomError
       end
       it 'should raise an error for invalid instance ids' do
-        expect{pmapi.pmNameInDom(121634824, 123)}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmNameInDom(121634824, 123)}.to raise_error PCP::PMAPI::InstError
       end
     end
 
     describe '#pmNameInDomArchive' do
       it 'requires integration testing'
       it 'raises an error if not used in an archive context' do
-        expect{pmapi.pmNameInDomArchive(121634824, 0)}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmNameInDomArchive(121634824, 0)}.to raise_error PCP::PMAPI::NotArchiveError
       end
     end
 
@@ -253,14 +253,14 @@ describe PCP::PMAPI do
         expect(pmapi.pmGetInDom(121634824)).to eq [{0=>"i-0"}, {1=>"i-1"}, {2=>"i-2"}, {3=>"i-3"}, {4=>"i-4"}]
       end
       it 'raises an error for invalid instance domains' do
-        expect{pmapi.pmGetInDom(123456)}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmGetInDom(123456)}.to raise_error PCP::PMAPI::InDomError
       end
     end
 
     describe '#pmGetInDomArchive' do
       it 'requires integration testing'
       it 'raises an error if not used in an archive context' do
-        expect{pmapi.pmGetInDomArchive(123456)}.to raise_error PCP::PMAPI::Error
+        expect{pmapi.pmGetInDomArchive(123456)}.to raise_error PCP::PMAPI::NotArchiveError
       end
     end
 
