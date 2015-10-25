@@ -643,6 +643,142 @@ static VALUE rb_pmAddProfile(VALUE self, VALUE indom, VALUE instance_identifiers
     return Qnil;
 }
 
+static VALUE build_pm_value_value(pmValue *pm_value, int value_format, int metric_type) {
+    pmAtomValue atom_value;
+    int error;
+    VALUE result = Qnil;
+
+    atom_value.cp = NULL;
+
+    if((error = pmExtractValue(value_format, pm_value, metric_type, &atom_value, metric_type))) {
+        raise_error_from_pmapi_error_code(error);
+        return Qnil;
+    }
+
+    switch(metric_type) {
+        case PM_TYPE_32:
+            result = LONG2NUM(atom_value.l);
+            break;
+        case PM_TYPE_U32:
+            result = ULONG2NUM(atom_value.ul);
+            break;
+        case PM_TYPE_64:
+            result = LL2NUM(atom_value.ll);
+            break;
+        case PM_TYPE_U64:
+            result = ULL2NUM(atom_value.ull);
+            break;
+        case PM_TYPE_FLOAT:
+            result = DBL2NUM((double)atom_value.f);
+            break;
+        case PM_TYPE_DOUBLE:
+            result = DBL2NUM(atom_value.d);
+            break;
+        case PM_TYPE_STRING:
+            result = rb_tainted_str_new_cstr(atom_value.cp);
+            free(atom_value.cp);
+            break;
+        case PM_TYPE_AGGREGATE:
+            /* No support for aggregate but pmExtractValue() will still malloc */
+            free(atom_value.vbp);
+        case PM_TYPE_AGGREGATE_STATIC:
+        case PM_TYPE_EVENT:
+        case PM_TYPE_HIGHRES_EVENT:
+        case PM_TYPE_UNKNOWN:
+        case PM_TYPE_NOSUPPORT:
+        default:
+            rb_raise(pcp_pmapi_error, "Metric data type %d not supported", metric_type);
+    }
+
+    return result;
+}
+
+static VALUE build_pm_values(pmValueSet *value_set) {
+    int i, error;
+    VALUE pm_values;
+    pmDesc metric_description;
+
+    pm_values = rb_ary_new2(value_set->numval);
+
+    /* We've got to get the metric description so we know how to decode the result */
+    if((error = pmLookupDesc(value_set->pmid, &metric_description)) < 0 ) {
+        raise_error_from_pmapi_error_code(error);
+        return Qnil;
+    }
+
+
+    for(i = 0; i < value_set->numval; i++) {
+        VALUE pm_value;
+        pm_value = rb_hash_new();
+
+        /*TODO: The pmValue struct has the inst as a signed int. Should this actually be a pmInstId (unsigned int?)*/
+        rb_hash_aset(pm_value, rb_create_symbol_from_str("inst"), UINT2NUM(value_set->vlist[i].inst));
+        rb_hash_aset(pm_value, rb_create_symbol_from_str("value"), build_pm_value_value(&value_set->vlist[i], value_set->valfmt, metric_description.type));
+
+        rb_ary_push(pm_values, pm_value);
+    }
+
+    return pm_values;
+}
+
+static VALUE build_pm_result_set(pmResult *pm_result) {
+    int i;
+    VALUE pm_value_sets;
+    pm_value_sets = rb_ary_new2(pm_result->numpmid);
+
+    for(i = 0; i < pm_result->numpmid; i++) {
+        VALUE pm_value_set;
+        pm_value_set = rb_hash_new();
+        rb_hash_aset(pm_value_set, rb_create_symbol_from_str("pmid"), UINT2NUM(pm_result->vset[i]->pmid));
+        rb_hash_aset(pm_value_set, rb_create_symbol_from_str("numval"), INT2NUM(pm_result->vset[i]->numval));
+        rb_hash_aset(pm_value_set, rb_create_symbol_from_str("valfmt"), INT2NUM(pm_result->vset[i]->valfmt));
+        rb_hash_aset(pm_value_set, rb_create_symbol_from_str("vlist"), build_pm_values(pm_result->vset[i]));
+        rb_ary_push(pm_value_sets, pm_value_set);
+    }
+
+    return pm_value_sets;
+}
+
+static VALUE build_pm_fetch_result(pmResult *pm_result) {
+    VALUE pm_result_hash;
+    pm_result_hash = rb_hash_new();
+
+    rb_hash_aset(pm_result_hash, rb_create_symbol_from_str("numpmid"), INT2NUM(pm_result->numpmid));
+    rb_hash_aset(pm_result_hash, rb_create_symbol_from_str("timestamp"), rb_time_new(pm_result->timestamp.tv_sec, pm_result->timestamp.tv_usec));
+    rb_hash_aset(pm_result_hash, rb_create_symbol_from_str("vset"), build_pm_result_set(pm_result));
+
+    return pm_result_hash;
+}
+
+static VALUE rb_pmFetch(VALUE self, VALUE pmids) {
+    int number_of_pmids, i, error;
+    pmID *pmidlist;
+    pmResult *pm_fetch_result;
+    VALUE result;
+
+    use_context(self);
+
+    number_of_pmids = RARRAY_LENINT(pmids);
+    pmidlist = malloc(sizeof(pmID*) * number_of_pmids);
+
+    for(i = 0; i < number_of_pmids; i++) {
+        pmidlist[i] = NUM2UINT(rb_ary_entry(pmids, i));
+    }
+
+    if((error = pmFetch(number_of_pmids, pmidlist, &pm_fetch_result)) < 0) {
+        raise_error_from_pmapi_error_code(error);
+        free(pmidlist);
+        return Qnil;
+    }
+
+    result = build_pm_fetch_result(pm_fetch_result);
+
+    pmFreeResult(pm_fetch_result);
+    free(pmidlist);
+
+    return result;
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
@@ -788,7 +924,7 @@ void Init_pcp_native() {
 
     rb_define_const(pcp_pmapi_class, "PM_ID_NULL", INT2NUM(PM_ID_NULL));
 
-    rb_define_const(pcp_pmapi_class, "PM_INDOM_NULL", INT2NUM(PM_INDOM_NULL));
+    rb_define_const(pcp_pmapi_class, "PM_INDOM_NULL", UINT2NUM(PM_INDOM_NULL));
     rb_define_const(pcp_pmapi_class, "PM_IN_NULL", INT2NUM(PM_IN_NULL));
 
     rb_define_alloc_func(pcp_pmapi_class, allocate);
@@ -818,6 +954,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmReconnectContext", rb_pmReconnectContext, 0);
     rb_define_method(pcp_pmapi_class, "pmDelProfile", rb_pmDelProfile, 2);
     rb_define_method(pcp_pmapi_class, "pmAddProfile", rb_pmAddProfile, 2);
+    rb_define_method(pcp_pmapi_class, "pmFetch", rb_pmFetch, 1);
 
 }
 
