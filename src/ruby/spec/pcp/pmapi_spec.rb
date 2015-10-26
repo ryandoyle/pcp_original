@@ -335,49 +335,82 @@ describe PCP::PMAPI do
     end
 
     describe '#pmDelProfile' do
-      # TODO: Test that we don't get back the instances that we delete
-      # EG:
-      # pmapi.pmDelProfile(121634824, [1])
-      # expect(pmapi.get_back_some_metrics_for_this_instance_domain_and_its_instances).to eq [{0=>"i-0"}, {2=>"i-2"}, {3=>"i-3"}, {4=>"i-4"}]
-      it 'deletes an instance from an instance domain'
 
-      # TODO: Check that passing in an empty list removes all instances
-      # EG:
-      # pmapi.pmDelProfile(121634824, [])
-      it 'deletes all instances from an instance domain'
+      before do
+        # Profile starts off as null, so add all instances first
+        pmapi.pmAddProfile(121634824, [])
+      end
 
-      # TODO: Check that passing is PM_INDOM_NULL removes all instances for all instance domains
-      # EG:
-      # pmapi.pmDelProfile(PCP::PMAPI::PM_INDOM_NULL, [])
-      it 'removes all instances from all domains'
+      it 'removes the instance from being returned in a fetch' do
+        pmapi.pmDelProfile(121634824, [0])
 
-      it 'might raise an error for invalid instance domains'
+        expect(pmapi.pmFetch([121634896])).to_not have_the_value(0).for_pmid(121634896).and_instance(0)
+      end
+
+      it 'removes multiple instances from being returned in a fetch' do
+        pmapi.pmDelProfile(121634824, [0,1])
+
+        expect(pmapi.pmFetch([121634896])).to_not have_the_value(0).for_pmid(121634896).and_instance(0)
+        expect(pmapi.pmFetch([121634896])).to_not have_the_value(1).for_pmid(121634896).and_instance(1)
+      end
+
+      it 'does not remove instances that arent specified' do
+        pmapi.pmDelProfile(121634824, [0])
+
+        expect(pmapi.pmFetch([121634896])).to have_the_value(1).for_pmid(121634896).and_instance(1)
+      end
+
+
+      it 'deletes all instances from an instance domain when given an empty list' do
+        pmapi.pmDelProfile(121634824, [])
+
+        expect(pmapi.pmFetch([121634896])).to_not have_the_value(0).for_pmid(121634896).and_instance(0)
+        expect(pmapi.pmFetch([121634896])).to_not have_the_value(1).for_pmid(121634896).and_instance(1)
+      end
+
+      it 'removes all instances from all domains for a null instance domain' do
+        pmapi.pmDelProfile(PCP::PMAPI::PM_INDOM_NULL, [])
+
+        expect(pmapi.pmFetch([121634896])).to_not have_the_value(0).for_pmid(121634896).and_instance(0)
+      end
+
     end
 
     describe '#pmAddProfile' do
-      # TODO: Test that we can add a single instance to an instance domain
-      # EG:
-      # pmapi.pmDelProfile(121634824, [])
-      # pmapi.pmAddProfile(121634824, [2])
-      # expect(pmapi.get_back_some_metrics_for_this_instance_domain_and_its_instances).to eq [{2=>"i-2"}]
-      it 'adds an instance back onto an instance domain'
 
-      # TODO: Test that we can add all instances for an instance domain
-      # EG:
-      # pmapi.pmDelProfile(121634824, [])
-      # expect(pmapi.get_back_some_metrics_for_this_instance_domain_and_its_instances).to eq []
-      # pmapi.pmAddProfile(121634824, [])
-      # expect(pmapi.get_back_some_metrics_for_this_instance_domain_and_its_instances).to eq [{0=>"i-0"}, {1=>"i-1"}, {2=>"i-2"}, {3=>"i-3"}, {4=>"i-4"}]
-      it 'adds all instances back onto an instance domain'
+      before do
+        # Clear all instance domains
+        pmapi.pmDelProfile(PCP::PMAPI::PM_INDOM_NULL, [])
+      end
 
-      # TODO: Check that passing is PM_INDOM_NULL adds all instances for all domains
-      # EG:
-      # pmapi.pmDelProfile(PCP::PMAPI::PM_INDOM_NULL, [])
-      # pmapi.pmAddProfile(PCP::PMAPI::PM_INDOM_NULL, [])
-      # expect(pmapi.get_back_some_metrics_for_this_instance_domain_and_its_instances).to eq [{0=>"i-0"}, {1=>"i-1"}, {2=>"i-2"}, {3=>"i-3"}, {4=>"i-4"}]
-      it 'adds all instances from all domains'
+      it 'adds an instance to be returned' do
+        pmapi.pmAddProfile(121634824, [2])
 
-      it 'might raise an error for invalid instance domains'
+        expect(pmapi.pmFetch([121634896])).to have_the_value(2).for_pmid(121634896).and_instance(2)
+      end
+
+      it 'adds an multiple instances to be returned' do
+        pmapi.pmAddProfile(121634824, [0,2])
+
+        expect(pmapi.pmFetch([121634896])).to have_the_value(0).for_pmid(121634896).and_instance(0)
+        expect(pmapi.pmFetch([121634896])).to have_the_value(2).for_pmid(121634896).and_instance(2)
+      end
+
+      it 'adds all instances back onto an instance domain' do
+        pmapi.pmAddProfile(121634824, [])
+
+        (0..4).each do |instance|
+          expect(pmapi.pmFetch([121634896])).to have_the_value(instance).for_pmid(121634896).and_instance(instance)
+        end
+      end
+
+      it 'adds all instances from all domains' do
+        pmapi.pmAddProfile(PCP::PMAPI::PM_INDOM_NULL, [])
+
+        (0..4).each do |instance|
+          expect(pmapi.pmFetch([121634896])).to have_the_value(instance).for_pmid(121634896).and_instance(instance)
+        end
+      end
     end
 
     describe '#pmFetch' do
