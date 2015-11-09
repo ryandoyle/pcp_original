@@ -779,6 +779,25 @@ static VALUE rb_pmFetch(VALUE self, VALUE pmids) {
     return result;
 }
 
+static VALUE rb_pmFetchArchive(VALUE self) {
+    int error;
+    pmResult *pm_fetch_archive_result;
+    VALUE result;
+
+    use_context(self);
+
+    if((error = pmFetchArchive(&pm_fetch_archive_result)) < 0) {
+        raise_error_from_pmapi_error_code(error);
+        return Qnil;
+    }
+
+    result = build_pm_fetch_result(pm_fetch_archive_result);
+
+    pmFreeResult(pm_fetch_archive_result);
+
+    return result;
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
@@ -955,6 +974,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmDelProfile", rb_pmDelProfile, 2);
     rb_define_method(pcp_pmapi_class, "pmAddProfile", rb_pmAddProfile, 2);
     rb_define_method(pcp_pmapi_class, "pmFetch", rb_pmFetch, 1);
+    rb_define_method(pcp_pmapi_class, "pmFetchArchive", rb_pmFetchArchive, 0);
 
 }
 

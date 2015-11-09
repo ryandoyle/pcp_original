@@ -479,6 +479,14 @@ describe PCP::PMAPI do
 
     end
 
+    describe '#pmFetchArchive' do
+      it 'requires integration testing'
+
+      it 'raises an error if not used in the correct context' do
+        expect{pmapi.pmFetchArchive}.to raise_error PCP::PMAPI::NotArchiveError
+      end
+    end
+
   end
 
 end
