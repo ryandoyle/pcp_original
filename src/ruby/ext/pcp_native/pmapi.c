@@ -798,6 +798,29 @@ static VALUE rb_pmFetchArchive(VALUE self) {
     return result;
 }
 
+static VALUE rb_pmGetArchiveLabel(VALUE self) {
+    int error;
+    pmLogLabel pm_log_label;
+    VALUE result;
+
+    use_context(self);
+
+    if((error = pmGetArchiveLabel(&pm_log_label)) < 0) {
+        raise_error_from_pmapi_error_code(error);
+        return Qnil;
+    }
+
+    result = rb_hash_new();
+
+    rb_hash_aset(result, rb_create_symbol_from_str("ll_magic"), INT2NUM(pm_log_label.ll_magic));
+    rb_hash_aset(result, rb_create_symbol_from_str("ll_pid"), INT2NUM(pm_log_label.ll_pid));
+    rb_hash_aset(result, rb_create_symbol_from_str("ll_start"), rb_time_new(pm_log_label.ll_start.tv_sec, pm_log_label.ll_start.tv_usec));
+    rb_hash_aset(result, rb_create_symbol_from_str("ll_hostname"), rb_str_new_cstr(pm_log_label.ll_hostname));
+    rb_hash_aset(result, rb_create_symbol_from_str("ll_tz"), rb_str_new_cstr(pm_log_label.ll_tz));
+
+    return result;
+}
+
 void Init_pcp_native() {
     pcp_module = rb_define_module("PCP");
     pcp_pmapi_class = rb_define_class_under(pcp_module, "PMAPI", rb_cObject);
@@ -975,6 +998,7 @@ void Init_pcp_native() {
     rb_define_method(pcp_pmapi_class, "pmAddProfile", rb_pmAddProfile, 2);
     rb_define_method(pcp_pmapi_class, "pmFetch", rb_pmFetch, 1);
     rb_define_method(pcp_pmapi_class, "pmFetchArchive", rb_pmFetchArchive, 0);
+    rb_define_method(pcp_pmapi_class, "pmGetArchiveLabel", rb_pmGetArchiveLabel, 0);
 
 }
 

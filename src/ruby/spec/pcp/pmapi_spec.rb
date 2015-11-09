@@ -139,11 +139,19 @@ describe PCP::PMAPI do
   describe 'integration tests' do
 
     let(:pmapi) { PCP::PMAPI.new(PCP::PMAPI::PM_CONTEXT_HOST, "localhost") }
+    let(:test_archive) { File.expand_path(File.dirname(__FILE__) + '/../test_archive') }
+    let(:pmapi_archive) { PCP::PMAPI.new(PCP::PMAPI::PM_CONTEXT_ARCHIVE, test_archive) }
 
 
     describe '#new' do
-      it 'should construct without errors' do
+      it 'should construct without errors for a host context' do
         PCP::PMAPI.new(PCP::PMAPI::PM_CONTEXT_HOST, "localhost")
+      end
+      it 'should construct without errors for an archive context' do
+        expect{pmapi_archive}.to_not raise_error
+      end
+      it 'should raise an error for invalid non-existent' do
+        expect{PCP::PMAPI.new(PCP::PMAPI::PM_CONTEXT_ARCHIVE, 'archive_that_doesnt_exist')}.to raise_error PCP::PMAPI::Error
       end
     end
 
@@ -484,6 +492,15 @@ describe PCP::PMAPI do
 
       it 'raises an error if not used in the correct context' do
         expect{pmapi.pmFetchArchive}.to raise_error PCP::PMAPI::NotArchiveError
+      end
+    end
+
+    describe '#pmGetArchiveLabel' do
+      it 'returns the archive label when used in a pmapi archive context' do
+        expect(pmapi_archive.pmGetArchiveLabel).to include :ll_hostname => 'ryandesktop', :ll_magic => 1342514690, :ll_pid => 28015, :ll_start => kind_of(Time), :ll_tz => 'EST-11'
+      end
+      it 'raises an error if not used in the correct context' do
+        expect{pmapi.pmGetArchiveLabel}.to raise_error PCP::PMAPI::NoContextError
       end
     end
 
